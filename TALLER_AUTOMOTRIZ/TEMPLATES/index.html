@@ -12,10 +12,26 @@
   <script>
     tailwind.config = { darkMode: 'class' }
   </script>
+  <style>
+    /* Estilos personalizados para Flatpickr y modo oscuro */
+    .flatpickr-calendar {
+      background: #090d16 !important;
+      border: 1px solid #1e293b !important;
+      border-radius: 1rem !important;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7) !important;
+    }
+    .flatpickr-day.selected {
+      background: #dc2626 !important;
+      border-color: #dc2626 !important;
+    }
+    .flatpickr-day:hover {
+      background: #1e293b !important;
+    }
+  </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col justify-between selection:bg-red-600 selection:text-white">
 
-  <!-- Header (Sin botón de Admin visible) -->
+  <!-- Header -->
   <header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-md sticky top-0 z-50">
     <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
       <div class="flex items-center gap-3">
@@ -28,7 +44,7 @@
         </div>
       </div>
       <div>
-        <a href="seguimiento.html" class="text-xs font-bold text-slate-300 hover:text-white transition px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800">
+        <a href="seguimiento" class="text-xs font-bold text-slate-300 hover:text-white transition px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800">
            Rastrear Cita
         </a>
       </div>
@@ -38,7 +54,7 @@
   <!-- Contenido Principal -->
   <main class="flex-1 max-w-4xl w-full mx-auto px-4 py-8 space-y-8">
     
-    <!-- BANNER DEL TALLER CON LA IMAGEN REAL Y DATOS DE CONTACTO -->
+    <!-- BANNER DEL TALLER -->
     <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
       <div class="relative h-56 sm:h-72 w-full overflow-hidden">
         <img src="{{ url_for('static', filename='banner.jpeg') }}" alt="Taller Automotriz del Norte" class="w-full h-full object-cover">
@@ -138,23 +154,23 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div class="space-y-1">
             <label class="text-[10px] font-bold text-slate-400 uppercase">Marca *</label>
-            <select id="select-marca" onchange="onMarcaChange()" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:border-red-500 		focus:outline-none">
- 			 <option value="Mazda">Mazda</option>
-  			<option value="Nissan">Nissan</option>
-  			<option value="Chevrolet">Chevrolet</option>
-  			<option value="Volkswagen">Volkswagen</option>
-  			<option value="Toyota">Toyota</option>
-  			<option value="Ford">Ford</option>
-  			<option value="Honda">Honda</option>
-  			<option value="Hyundai">Hyundai</option>
- 			 <option value="Kia">Kia</option>
- 			 <option value="Renault">Renault</option>
-  			<option value="Suzuki">Suzuki</option>
- 			 <option value="SEAT">SEAT</option>
- 			 <option value="Peugeot">Peugeot</option>
- 			 <option value="Jeep">Jeep</option>
-  			<option value="RAM">RAM</option>
-		</select>
+            <select id="select-marca" onchange="onMarcaChange()" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:border-red-500 focus:outline-none">
+              <option value="Mazda">Mazda</option>
+              <option value="Nissan">Nissan</option>
+              <option value="Chevrolet">Chevrolet</option>
+              <option value="Volkswagen">Volkswagen</option>
+              <option value="Toyota">Toyota</option>
+              <option value="Ford">Ford</option>
+              <option value="Honda">Honda</option>
+              <option value="Hyundai">Hyundai</option>
+              <option value="Kia">Kia</option>
+              <option value="Renault">Renault</option>
+              <option value="Suzuki">Suzuki</option>
+              <option value="SEAT">SEAT</option>
+              <option value="Peugeot">Peugeot</option>
+              <option value="Jeep">Jeep</option>
+              <option value="RAM">RAM</option>
+            </select>
           </div>
 
           <div class="space-y-1">
@@ -231,7 +247,11 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div class="space-y-1.5">
             <label class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Fecha de Ingreso *</label>
-            <input type="text" id="fecha-cita" placeholder="Selecciona una fecha" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-xs text-white focus:border-red-500 focus:outline-none">
+            <!-- Contenedor con botón e icono de calendario claramente visible -->
+            <div class="relative">
+              <input type="text" id="fecha-cita" placeholder="Selecciona una fecha" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3.5 pr-12 text-xs text-white focus:border-red-500 focus:outline-none cursor-pointer">
+              <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-red-500 pointer-events-none text-base">📅</span>
+            </div>
           </div>
 
           <div class="space-y-1.5">
@@ -316,6 +336,7 @@
         </div>
 
         <div class="inline-block bg-slate-950 p-5 rounded-3xl border border-slate-800 shadow-xl space-y-3">
+          <!-- Generador funcional de Código QR dinámico -->
           <img id="qr-img" src="" alt="Código QR de Cita" class="w-40 h-40 mx-auto rounded-xl bg-white p-2">
           <p class="text-[10px] font-mono text-slate-400 font-bold uppercase">Folio: <span id="final-folio" class="text-red-500"></span></p>
         </div>
@@ -339,5 +360,20 @@
   </footer>
 
   <script src="{{ url_for('static', filename='app.js') }}"></script>
+  <script>
+    // Complemento dinámico para generar el código QR funcional al confirmar
+    const originalConfirm = window.confirmarYGuardarCita;
+    window.confirmarYGuardarCita = function() {
+      if (typeof originalConfirm === 'function') {
+        originalConfirm();
+      }
+      const folio = document.getElementById('res-folio').innerText;
+      if (folio) {
+        const urlSeguimiento = `${window.location.origin}/seguimiento?id=${folio}`;
+        document.getElementById('qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(urlSeguimiento)}`;
+        document.getElementById('final-folio').innerText = folio;
+      }
+    };
+  </script>
 </body>
 </html>
