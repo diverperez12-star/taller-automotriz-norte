@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Taller Automotriz del Norte - Agenda tu Cita</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col justify-between selection:bg-red-600 selection:text-white">
+
+  <!-- Header (Sin botón de Admin visible) -->
+  <header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="bg-red-600 font-black text-white text-xs px-2.5 py-1.5 rounded-lg tracking-wider shadow-lg shadow-red-600/30">
+          TAN
+        </div>
+        <div>
+          <h1 class="text-xs font-black tracking-widest uppercase text-white">TALLER AUTOMOTRIZ DEL NORTE</h1>
+          <p class="text-[9px] text-red-500 font-bold tracking-widest uppercase">SISTEMA OFICIAL DE CITAS</p>
+        </div>
+      </div>
+      <div>
+        <a href="seguimiento.html" class="text-xs font-bold text-slate-300 hover:text-white transition px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800">
+           Rastrear Cita
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Contenido Principal -->
+  <main class="flex-1 max-w-4xl w-full mx-auto px-4 py-8 space-y-8">
+    
+    <!-- BANNER DEL TALLER CON LA IMAGEN REAL Y DATOS DE CONTACTO -->
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+      <div class="relative h-56 sm:h-72 w-full overflow-hidden">
+        <img src="{{ url_for('static', filename='banner.jpeg') }}" alt="Taller Automotriz del Norte" class="w-full h-full object-cover">
+        <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
+        <div class="absolute bottom-4 left-6 right-6 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+          <div>
+            <span class="bg-red-600 text-white font-black text-[10px] tracking-widest px-2.5 py-1 rounded-full uppercase">
+              Servicio Profesional
+            </span>
+            <h2 class="text-xl sm:text-2xl font-black text-white mt-2 tracking-wide drop-shadow">
+              Taller Automotriz del Norte
+            </h2>
+            <p class="text-xs text-slate-300 drop-shadow">Motor, Afinación, Frenos, Diagnósticos y Escáner</p>
+          </div>
+          <a href="tel:9611959977" class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-bold text-xs rounded-xl shadow-lg transition flex items-center gap-2">
+             961 195 9977
+          </a>
+        </div>
+      </div>
+      
+      <!-- Barra de Contacto del Técnico Jefe -->
+      <div class="bg-slate-950 p-4 border-t border-slate-800/80 flex flex-col sm:flex-row justify-between items-center text-xs gap-3">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></span>
+          <span class="text-slate-300 font-medium">Técnico Jefe Encargado: <strong class="text-white">Luis Alejandro Clemente</strong></span>
+        </div>
+        <a href="https://wa.me/529611959977?text=Hola%2C%20necesito%20informaci%C3%B3n%20sobre%20un%20servicio%20en%20el%20taller" target="_blank" class="text-red-400 hover:text-red-300 font-bold tracking-wide flex items-center gap-1">
+          💬 Contactar por WhatsApp Directo
+        </a>
+      </div>
+    </div>
+
+    <!-- Contenedor del Asistente de Citas (Wizard) -->
+    <div id="wizard-container" class="bg-slate-900/90 border border-slate-800/90 rounded-3xl p-6 md:p-8 shadow-2xl space-y-8">
+      
+      <!-- Stepper / Barra de Progreso Superior -->
+      <div class="space-y-3">
+        <div class="flex justify-between text-xs font-bold uppercase tracking-wider">
+          <div id="nav-step-1" class="flex items-center gap-2 text-red-500">
+            <span class="step-dot bg-red-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black">1</span>
+            <span class="hidden sm:inline">Cliente</span>
+          </div>
+          <div id="nav-step-2" class="flex items-center gap-2 text-slate-400">
+            <span class="step-dot bg-slate-800 text-slate-400 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black">2</span>
+            <span class="hidden sm:inline">Auto</span>
+          </div>
+          <div id="nav-step-3" class="flex items-center gap-2 text-slate-400">
+            <span class="step-dot bg-slate-800 text-slate-400 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black">3</span>
+            <span class="hidden sm:inline">Agenda</span>
+          </div>
+          <div id="nav-step-4" class="flex items-center gap-2 text-slate-400">
+            <span class="step-dot bg-slate-800 text-slate-400 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black">4</span>
+            <span class="hidden sm:inline">Resumen</span>
+          </div>
+          <div id="nav-step-5" class="flex items-center gap-2 text-slate-400">
+            <span class="step-dot bg-slate-800 text-slate-400 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black">5</span>
+            <span class="hidden sm:inline">Confirmación</span>
+          </div>
+        </div>
+        <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+          <div id="progress-bar" class="bg-red-600 h-full transition-all duration-300" style="width: 20%;"></div>
+        </div>
+      </div>
+
+      <!-- PASO 1: CLIENTE -->
+      <div id="step-1" class="step-pane space-y-6">
+        <div>
+          <h3 class="text-lg font-black text-white uppercase tracking-wide">01. Datos del Cliente</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Ingresa tus datos personales para ponernos en contacto contigo.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="space-y-1.5">
+            <label class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Nombre Completo *</label>
+            <input type="text" id="input-nombre" placeholder="Ej. Carlos Mendoza" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-xs text-white placeholder-slate-600 focus:border-red-500 focus:outline-none">
+          </div>
+          <div class="space-y-1.5">
+            <label class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Teléfono / WhatsApp *</label>
+            <input type="tel" id="input-telefono" placeholder="Ej. 961 123 4567" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-xs text-white placeholder-slate-600 focus:border-red-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-4">
+          <button type="button" onclick="goToStep(2)" class="px-8 py-3.5 bg-red-600 hover:bg-red-500 text-white font-black text-xs uppercase tracking-wider rounded-xl transition shadow-lg shadow-red-600/30">
+            Siguiente →
+          </button>
+        </div>
+      </div>
+
+      <!-- PASO 2: AUTO Y SERVICIOS -->
+      <div id="step-2" class="step-pane space-y-6 hidden">
+        <div>
+          <h3 class="text-lg font-black text-white uppercase tracking-wide">02. Información del Vehículo y Servicios</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Selecciona marca, modelo, motor y los servicios requeridos.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div class="space-y-1">
+            <label class="text-[10px] font-bold text-slate-400 uppercase">Marca *</label>
+            <select id="select-marca" onchange="onMarcaChange()" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:border-red-500 		focus:outline-none">
+ 			 <option value="Mazda">Mazda</option>
+  			<option value="Nissan">Nissan</option>
+  			<option value="Chevrolet">Chevrolet</option>
+  			<option value="Volkswagen">Volkswagen</option>
+  			<option value="Toyota">Toyota</option>
+  			<option value="Ford">Ford</option>
+  			<option value="Honda">Honda</option>
+  			<option value="Hyundai">Hyundai</option>
+ 			 <option value="Kia">Kia</option>
+ 			 <option value="Renault">Renault</option>
+  			<option value="Suzuki">Suzuki</option>
+ 			 <option value="SEAT">SEAT</option>
+ 			 <option value="Peugeot">Peugeot</option>
+ 			 <option value="Jeep">Jeep</option>
+  			<option value="RAM">RAM</option>
+		</select>
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-[10px] font-bold text-slate-400 uppercase">Modelo *</label>
+            <select id="select-modelo" onchange="onModeloChange()" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:border-red-500 focus:outline-none">
+              <!-- Dinámico -->
+            </select>
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-[10px] font-bold text-slate-400 uppercase">Año *</label>
+            <select id="select-anio" onchange="onAnioChange()" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:border-red-500 focus:outline-none">
+              <!-- Dinámico -->
+            </select>
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-[10px] font-bold text-slate-400 uppercase">Motor / Variante *</label>
+            <select id="select-motor" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:border-red-500 focus:outline-none">
+              <!-- Dinámico -->
+            </select>
+          </div>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Número de Serie (VIN / Chasis) *</label>
+          <input type="text" id="input-vin" placeholder="Ej. 1FA6P8CF0H5100000 (17 dígitos)" class="w-full uppercase font-mono bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-xs text-white placeholder-slate-600 focus:border-red-500 focus:outline-none">
+        </div>
+
+        <!-- Categorías de Servicios -->
+        <div class="space-y-3 pt-2">
+          <label class="text-[11px] font-bold text-slate-300 uppercase tracking-wider block">Categoría de Servicio</label>
+          <div class="grid grid-cols-3 gap-3">
+            <button type="button" id="cat-preventivo" onclick="selectCategory('preventivo')" class="p-3 bg-red-950/20 border border-red-500 rounded-xl text-center text-xs font-bold text-white transition">
+               Preventivo
+            </button>
+            <button type="button" id="cat-correctivo" onclick="selectCategory('correctivo')" class="p-3 bg-slate-950 border border-slate-800 rounded-xl text-center text-xs font-bold text-slate-400 hover:text-white transition">
+              Correctivo
+            </button>
+            <button type="button" id="cat-diagnostico" onclick="selectCategory('diagnostico')" class="p-3 bg-slate-950 border border-slate-800 rounded-xl text-center text-xs font-bold text-slate-400 hover:text-white transition">
+               Diagnóstico
+            </button>
+          </div>
+        </div>
+
+        <div id="vintage-warning" class="hidden p-3 bg-amber-950/40 border border-amber-800/50 rounded-xl text-amber-300 text-xs">
+           Vehículo clásico / vintage detectado (1970-1990). Se aplicará recargo por especialización en refacciones de época.
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-[11px] font-bold text-slate-300 uppercase tracking-wider block">Seleccionar Servicios</label>
+          <div id="services-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-56 overflow-y-auto pr-1">
+            <!-- Dinámico -->
+          </div>
+        </div>
+
+        <div class="flex justify-between pt-4">
+          <button type="button" onclick="goToStep(1)" class="px-6 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs uppercase tracking-wider rounded-xl transition">
+            ← Anterior
+          </button>
+          <button type="button" onclick="goToStep(3)" class="px-8 py-3.5 bg-red-600 hover:bg-red-500 text-white font-black text-xs uppercase tracking-wider rounded-xl transition shadow-lg shadow-red-600/30">
+            Siguiente →
+          </button>
+        </div>
+      </div>
+
+      <!-- PASO 3: AGENDA (09:00 - 17:00) -->
+      <div id="step-3" class="step-pane space-y-6 hidden">
+        <div>
+          <h3 class="text-lg font-black text-white uppercase tracking-wide">03. Programación de Cita</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Selecciona la fecha y el horario de recepción (9:00 AM - 5:00 PM).</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-1.5">
+            <label class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Fecha de Ingreso *</label>
+            <input type="text" id="fecha-cita" placeholder="Selecciona una fecha" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-xs text-white focus:border-red-500 focus:outline-none">
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Horario Disponible *</label>
+            <input type="hidden" id="hora-seleccionada">
+            <div id="contenedor-horarios" class="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto p-1 bg-slate-950 border border-slate-800 rounded-xl">
+              <div class="col-span-3 text-center py-6 text-xs text-slate-500">Selecciona una fecha primero</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-between pt-4">
+          <button type="button" onclick="goToStep(2)" class="px-6 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs uppercase tracking-wider rounded-xl transition">
+            ← Anterior
+          </button>
+          <button type="button" onclick="goToStep(4)" class="px-8 py-3.5 bg-red-600 hover:bg-red-500 text-white font-black text-xs uppercase tracking-wider rounded-xl transition shadow-lg shadow-red-600/30">
+            Siguiente →
+          </button>
+        </div>
+      </div>
+
+      <!-- PASO 4: RESUMEN -->
+      <div id="step-4" class="step-pane space-y-6 hidden">
+        <div>
+          <h3 class="text-lg font-black text-white uppercase tracking-wide">04. Resumen de la Cita</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Verifica que los datos sean correctos antes de confirmar.</p>
+        </div>
+
+        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-6 space-y-4 text-xs">
+          <div class="flex justify-between border-b border-slate-800/80 pb-3">
+            <span class="text-slate-400 font-medium">Folio Generado:</span>
+            <span id="res-folio" class="font-mono font-black text-red-500 text-sm"></span>
+          </div>
+          <div class="flex justify-between border-b border-slate-800/80 pb-3">
+            <span class="text-slate-400 font-medium">Cliente:</span>
+            <span id="res-cliente" class="text-white font-bold"></span>
+          </div>
+          <div class="flex justify-between border-b border-slate-800/80 pb-3">
+            <span class="text-slate-400 font-medium">Teléfono:</span>
+            <span id="res-telefono" class="text-white font-bold"></span>
+          </div>
+          <div class="flex justify-between border-b border-slate-800/80 pb-3">
+            <span class="text-slate-400 font-medium">Vehículo:</span>
+            <span id="res-vehiculo" class="text-white font-bold"></span>
+          </div>
+          <div class="flex justify-between border-b border-slate-800/80 pb-3">
+            <span class="text-slate-400 font-medium">Número de Serie (VIN):</span>
+            <span id="res-vin" class="text-white font-mono font-bold uppercase"></span>
+          </div>
+          <div class="flex justify-between border-b border-slate-800/80 pb-3">
+            <span class="text-slate-400 font-medium">Tipo de Servicio:</span>
+            <span id="res-tipo" class="text-white font-bold"></span>
+          </div>
+          <div class="flex justify-between border-b border-slate-800/80 pb-3">
+            <span class="text-slate-400 font-medium">Fecha y Hora:</span>
+            <span id="res-agenda" class="text-white font-bold"></span>
+          </div>
+          <div class="flex justify-between items-center text-sm font-black pt-2">
+            <span class="text-slate-300">Costo Estimado:</span>
+            <span id="res-costo" class="text-red-400 font-mono text-base"></span>
+          </div>
+        </div>
+
+        <div class="flex justify-between pt-4">
+          <button type="button" onclick="goToStep(3)" class="px-6 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs uppercase tracking-wider rounded-xl transition">
+            ← Anterior
+          </button>
+          <button type="button" onclick="confirmarYGuardarCita()" class="px-8 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider rounded-xl transition shadow-lg shadow-emerald-600/30">
+            Confirmar y Agendar Cita ✓
+          </button>
+        </div>
+      </div>
+
+      <!-- PASO 5: CONFIRMACIÓN Y QR -->
+      <div id="step-5" class="step-pane space-y-6 hidden text-center py-4">
+        <div class="w-16 h-16 bg-emerald-600/20 border border-emerald-500/40 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto text-2xl font-black shadow-lg shadow-emerald-600/20">
+          ✓
+        </div>
+        <div>
+          <h3 class="text-xl font-black text-white uppercase tracking-wide">¡Cita Agendada con Éxito!</h3>
+          <p class="text-xs text-slate-400 mt-1">Guarda tu número de folio o escanea el código QR para presentarlo en recepción.</p>
+        </div>
+
+        <div class="inline-block bg-slate-950 p-5 rounded-3xl border border-slate-800 shadow-xl space-y-3">
+          <img id="qr-img" src="" alt="Código QR de Cita" class="w-40 h-40 mx-auto rounded-xl bg-white p-2">
+          <p class="text-[10px] font-mono text-slate-400 font-bold uppercase">Folio: <span id="final-folio" class="text-red-500"></span></p>
+        </div>
+
+        <div class="flex flex-wrap justify-center gap-4 pt-4">
+          <button onclick="irARastrear()" class="px-6 py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition">
+             Rastrear Estado en Tiempo Real
+          </button>
+          <button onclick="location.reload()" class="px-6 py-3.5 bg-red-600 hover:bg-red-500 text-white font-black text-xs uppercase tracking-wider rounded-xl transition shadow-lg shadow-red-600/30">
+            + Agendar Nueva Cita
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="text-center py-6 text-xs text-slate-600 border-t border-slate-900 mt-12 space-y-1">
+    <p>© 2026 Taller Automotriz del Norte - Tuxtla Gutiérrez, Chiapas. Todos los derechos reservados.</p>
+    <p class="text-slate-500">Atención Directa: Técnico Jefe Luis Alejandro Clemente (Tel: 961 195 9977)</p>
+  </footer>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Control Técnico - Taller Automotriz del Norte</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans p-4 sm:p-6 lg:p-8">
+
+  <div class="max-w-7xl mx-auto space-y-6">
+
+    <!-- Encabezado Principal -->
+    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b border-slate-800">
+      <div>
+        <div class="flex items-center gap-3">
+          <span class="bg-red-600 text-white font-black text-xs px-2.5 py-1 rounded-md tracking-wider">TAN</span>
+          <h1 class="text-2xl font-black text-white tracking-wide">Panel de Administración y Taller</h1>
+        </div>
+        <p class="text-xs text-slate-400 mt-1">Gestión de citas, recepción de vehículos y evidencia fotográfica técnica</p>
+      </div>
+      <a href="/" class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-200 font-bold text-xs rounded-xl border border-slate-800/80 transition flex items-center gap-2 shadow-sm">
+        <span>👁️</span> Ver Vista de Cliente
+      </a>
+    </header>
+
+    <!-- Tarjetas de Métricas Rápidas (KPIs) -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div class="bg-slate-900/70 border border-slate-800 p-4 rounded-2xl flex flex-col justify-between space-y-1">
+        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Citas</span>
+        <span id="kpi-total" class="text-2xl font-black text-white">0</span>
+      </div>
+      <div class="bg-slate-900/70 border border-slate-800 p-4 rounded-2xl flex flex-col justify-between space-y-1">
+        <span class="text-[11px] font-bold text-amber-400 uppercase tracking-wider">En Espera</span>
+        <span id="kpi-espera" class="text-2xl font-black text-amber-400">0</span>
+      </div>
+      <div class="bg-slate-900/70 border border-slate-800 p-4 rounded-2xl flex flex-col justify-between space-y-1">
+        <span class="text-[11px] font-bold text-blue-400 uppercase tracking-wider">En Reparación</span>
+        <span id="kpi-reparacion" class="text-2xl font-black text-blue-400">0</span>
+      </div>
+      <div class="bg-slate-900/70 border border-slate-800 p-4 rounded-2xl flex flex-col justify-between space-y-1">
+        <span class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">Completadas</span>
+        <span id="kpi-completadas" class="text-2xl font-black text-emerald-400">0</span>
+      </div>
+    </div>
+
+    <!-- Contenedor Principal de la Tabla con Buscador -->
+    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-5 shadow-2xl">
+      
+      <!-- Barra de Filtros y Búsqueda -->
+      <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+        <div class="relative flex-1 max-w-md">
+          <input type="text" id="input-filtro" onkeyup="filtrarTabla()" placeholder="Buscar por Folio, Cliente o Vehículo..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-red-500/80 transition">
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="text-xs font-bold text-slate-400">Filtrar por estatus:</label>
+          <select id="select-filtro-estatus" onchange="filtrarTabla()" class="bg-slate-950 border border-slate-800 text-xs font-semibold text-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:border-red-500">
+            <option value="TODOS">Todos los estatus</option>
+            <option value="Confirmada / En Espera">En Espera</option>
+            <option value="En Reparación">En Reparación</option>
+            <option value="Completada">Completada</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tabla Estilizada -->
+      <div class="overflow-x-auto rounded-xl border border-slate-800/80 bg-slate-950">
+        <table class="w-full text-left text-xs text-slate-300 border-collapse">
+          <thead class="bg-slate-900/90 text-slate-400 uppercase tracking-wider text-[10px] font-bold border-b border-slate-800">
+            <tr>
+              <th class="p-3.5">FOLIO</th>
+              <th class="p-3.5">CLIENTE</th>
+              <th class="p-3.5">VEHÍCULO</th>
+              <th class="p-3.5">SERVICIOS SOLICITADOS</th>
+              <th class="p-3.5">RECEPCIÓN</th>
+              <th class="p-3.5 text-center">ESTATUS</th>
+              <th class="p-3.5 text-center">EVIDENCIA FOTOGRÁFICA</th>
+              <th class="p-3.5 text-center">ACCIONES</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-citas" class="divide-y divide-slate-800/60 font-normal">
+            <!-- Renderizado dinámico -->
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- MODAL DE REPORTE TÉCNICO Y FOTOGRAFÍAS -->
+  <div id="modal-reporte" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-6 space-y-5 shadow-2xl max-h-[92vh] flex flex-col justify-between">
+      
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <div>
+          <h3 class="text-base font-black text-white">Reporte Técnico y Evidencia Fotográfica</h3>
+          <p class="text-xs text-slate-400">Folio: <span id="modal-folio-title" class="font-mono text-red-400 font-bold"></span></p>
+        </div>
+        <button onclick="cerrarModalReporte()" class="text-slate-400 hover:text-white font-bold text-lg p-1">✕</button>
+      </div>
+
+      <div class="space-y-4 text-xs overflow-y-auto pr-1 flex-1">
+        <!-- Servicio Solicitado -->
+        <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800/80 space-y-1">
+          <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Trabajos Solicitados por el Cliente:</span>
+          <p id="modal-servicio-solicitado" class="text-xs text-red-400 font-bold"></p>
+        </div>
+
+        <!-- Notas de Diagnóstico / Trabajo -->
+        <div>
+          <label class="block font-bold text-slate-300 mb-1">Descripción del trabajo o notas técnicas *</label>
+          <textarea id="rep-notas" rows="3" placeholder="Escribe aquí los hallazgos técnicos, reparaciones efectuadas y recomendaciones..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white placeholder-slate-600 focus:outline-none focus:border-red-500/80"></textarea>
+        </div>
+
+        <div id="loading-indicator" class="hidden p-3 bg-red-950/40 border border-red-800/50 rounded-xl text-red-300 text-xs text-center font-bold animate-pulse">
+          ⏳ Procesando e insertando fotografías masivas...
+        </div>
+
+        <!-- Carga de Fotos -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Piezas Viejas -->
+          <div class="space-y-2 bg-slate-950 p-3.5 rounded-2xl border border-slate-800/80">
+            <div class="flex justify-between items-center">
+              <label class="font-bold text-red-400 text-[11px]">⚠️ Piezas Retiradas (Viejas)</label>
+              <span id="count-viejas" class="text-[10px] text-slate-500 font-bold">0 fotos</span>
+            </div>
+            <input type="file" id="input-viejas" accept="image/*" multiple onchange="cargarMultiplesFotos(event, 'viejas')" class="text-[10px] text-slate-400 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700 w-full">
+            <div id="grid-viejas" class="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto mt-2 p-1 bg-slate-900/40 rounded-xl"></div>
+          </div>
+
+          <!-- Piezas Nuevas -->
+          <div class="space-y-2 bg-slate-950 p-3.5 rounded-2xl border border-slate-800/80">
+            <div class="flex justify-between items-center">
+              <label class="font-bold text-emerald-400 text-[11px]">✨ Piezas Nuevas Instaladas</label>
+              <span id="count-nuevas" class="text-[10px] text-slate-500 font-bold">0 fotos</span>
+            </div>
+            <input type="file" id="input-nuevas" accept="image/*" multiple onchange="cargarMultiplesFotos(event, 'nuevas')" class="text-[10px] text-slate-400 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:bg-slate-800 file:text-slate-300 hover:file:bg-slate-700 w-full">
+            <div id="grid-nuevas" class="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto mt-2 p-1 bg-slate-900/40 rounded-xl"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-3 border-t border-slate-800">
+        <button onclick="cerrarModalReporte()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition">
+          Cancelar
+        </button>
+        <button onclick="guardarReporteTecnico()" class="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white font-black rounded-xl text-xs shadow-lg shadow-red-600/30 transition">
+          Guardar Evidencia Fotográfica
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    /* INDEXEDDB DE ALTO RENDIMIENTO */
+    let db;
+    const request = indexedDB.open("TAN_FotosDB", 1);
+
+    request.onupgradeneeded = function(e) {
+      db = e.target.result;
+      if (!db.objectStoreNames.contains("reportes")) {
+        db.createObjectStore("reportes", { keyPath: "folio" });
+      }
+    };
+
+    request.onsuccess = function(e) {
+      db = e.target.result;
+      cargarCitasAdmin();
+    };
+
+    let folioActualReporte = null;
+    let tempViejas = [];
+    let tempNuevas = [];
+
+    function cargarCitasAdmin() {
+      const tbody = document.getElementById('tbody-citas');
+      const citas = JSON.parse(localStorage.getItem('citas_registradas') || '[]');
+      
+      // Actualizar KPIs
+      let countEspera = 0;
+      let countReparacion = 0;
+      let countCompletadas = 0;
+
+      citas.forEach(c => {
+        if (c.estatus === 'En Reparación') countReparacion++;
+        else if (c.estatus === 'Completada') countCompletadas++;
+        else countEspera++;
+      });
+
+      document.getElementById('kpi-total').innerText = citas.length;
+      document.getElementById('kpi-espera').innerText = countEspera;
+      document.getElementById('kpi-reparacion').innerText = countReparacion;
+      document.getElementById('kpi-completadas').innerText = countCompletadas;
+
+      tbody.innerHTML = '';
+
+      if (citas.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-500 italic">No hay citas registradas en el sistema.</td></tr>`;
+        return;
+      }
+
+      citas.forEach(c => {
+        const detalleServicio = c.serviciosDetalle || c.servicio || 'Servicio General';
+        
+        // Render de servicios como badges pulcros
+        const serviciosArr = detalleServicio.split(', ');
+        let serviciosHTML = `<div class="flex flex-wrap gap-1">`;
+        serviciosArr.forEach(s => {
+          serviciosHTML += `<span class="bg-red-950/60 text-red-300 border border-red-800/60 px-2 py-0.5 rounded-md text-[10px] font-semibold">${s}</span>`;
+        });
+        serviciosHTML += `</div>`;
+
+        // Render de Estatus
+        let estatusBadgeClass = "bg-amber-950/50 text-amber-300 border-amber-800/80";
+        if (c.estatus === 'En Reparación') estatusBadgeClass = "bg-blue-950/50 text-blue-300 border-blue-800/80";
+        if (c.estatus === 'Completada') estatusBadgeClass = "bg-emerald-950/50 text-emerald-300 border-emerald-800/80";
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-900/40 transition border-b border-slate-800/40";
+        tr.setAttribute('data-search', `${c.folio} ${c.cliente} ${c.vehiculo}`.toLowerCase());
+        tr.setAttribute('data-estatus', c.estatus || 'Confirmada / En Espera');
+
+        tr.innerHTML = `
+          <td class="p-3.5 font-mono font-black text-red-400 whitespace-nowrap">${c.folio}</td>
+          <td class="p-3.5 font-bold text-white whitespace-nowrap">${c.cliente}</td>
+          <td class="p-3.5 text-slate-300 font-medium">${c.vehiculo}</td>
+          <td class="p-3.5">${serviciosHTML}</td>
+          <td class="p-3.5 text-slate-400 whitespace-nowrap font-mono text-[11px]">${c.fecha}<br><span class="text-slate-500">${c.hora}</span></td>
+          <td class="p-3.5 text-center whitespace-nowrap">
+            <select onchange="cambiarEstatus('${c.folio}', this.value)" class="bg-slate-900 border text-xs font-bold rounded-lg px-2 py-1 focus:outline-none ${estatusBadgeClass}">
+              <option value="Confirmada / En Espera" ${c.estatus === 'Confirmada / En Espera' ? 'selected' : ''}>⏱️ En Espera</option>
+              <option value="En Reparación" ${c.estatus === 'En Reparación' ? 'selected' : ''}>🛠️ En Reparación</option>
+              <option value="Completada" ${c.estatus === 'Completada' ? 'selected' : ''}>✅ Completada</option>
+            </select>
+          </td>
+          <td class="p-3.5 text-center whitespace-nowrap">
+            <button id="btn-rep-${c.folio}" onclick="abrirModalReporte('${c.folio}')" class="px-3 py-1.5 bg-slate-900 border-slate-800 hover:border-slate-700 text-slate-300 border rounded-xl font-bold text-[11px] transition shadow-sm">
+              📷 Cargar Fotos
+            </button>
+          </td>
+          <td class="p-3.5 text-center whitespace-nowrap">
+            <button onclick="eliminarCita('${c.folio}')" class="p-1.5 bg-red-950/40 hover:bg-red-900/60 border border-red-800/60 text-red-400 rounded-lg text-[10px] font-bold transition">Eliminar</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+
+        if (db) {
+          const tx = db.transaction("reportes", "readonly");
+          const store = tx.objectStore("reportes");
+          const req = store.get(c.folio);
+          req.onsuccess = function() {
+            if (req.result && (req.result.notas || (req.result.imgViejas && req.result.imgViejas.length > 0))) {
+              const btn = document.getElementById(`btn-rep-${c.folio}`);
+              if (btn) {
+                btn.className = "px-3 py-1.5 bg-emerald-950/80 border-emerald-800 text-emerald-300 border rounded-xl font-bold text-[11px] transition shadow-sm";
+                btn.innerHTML = "✅ Reporte listo";
+              }
+            }
+          };
+        }
+      });
+    }
+
+    function filtrarTabla() {
+      const query = document.getElementById('input-filtro').value.toLowerCase().trim();
+      const estatusFiltro = document.getElementById('select-filtro-estatus').value;
+      const filas = document.querySelectorAll('#tbody-citas tr');
+
+      filas.forEach(f => {
+        const searchText = f.getAttribute('data-search') || '';
+        const estatusText = f.getAttribute('data-estatus') || '';
+
+        const coincideSearch = searchText.includes(query);
+        const coincideEstatus = (estatusFiltro === 'TODOS') || (estatusText === estatusFiltro);
+
+        if (coincideSearch && coincideEstatus) {
+          f.classList.remove('hidden');
+        } else {
+          f.classList.add('hidden');
+        }
+      });
+    }
+
+    function cambiarEstatus(folio, nuevoEstatus) {
+      const citas = JSON.parse(localStorage.getItem('citas_registradas') || '[]');
+      const cita = citas.find(c => c.folio === folio);
+      if (cita) {
+        cita.estatus = nuevoEstatus;
+        localStorage.setItem('citas_registradas', JSON.stringify(citas));
+        cargarCitasAdmin();
+      }
+    }
+
+    function abrirModalReporte(folio) {
+      folioActualReporte = folio;
+      document.getElementById('modal-folio-title').innerText = folio;
+      
+      const citas = JSON.parse(localStorage.getItem('citas_registradas') || '[]');
+      const cita = citas.find(c => c.folio === folio);
+
+      if (cita) {
+        document.getElementById('modal-servicio-solicitado').innerText = cita.serviciosDetalle || cita.servicio || 'Servicio General';
+      }
+
+      tempViejas = [];
+      tempNuevas = [];
+
+      document.getElementById('input-viejas').value = '';
+      document.getElementById('input-nuevas').value = '';
+      document.getElementById('rep-notas').value = '';
+
+      if (db) {
+        const tx = db.transaction("reportes", "readonly");
+        const store = tx.objectStore("reportes");
+        const req = store.get(folio);
+        req.onsuccess = function() {
+          if (req.result) {
+            document.getElementById('rep-notas').value = req.result.notas || '';
+            tempViejas = req.result.imgViejas || [];
+            tempNuevas = req.result.imgNuevas || [];
+          }
+          renderizarGrid('viejas');
+          renderizarGrid('nuevas');
+        };
+      } else {
+        renderizarGrid('viejas');
+        renderizarGrid('nuevas');
+      }
+
+      document.getElementById('modal-reporte').classList.remove('hidden');
+    }
+
+    function cerrarModalReporte() {
+      document.getElementById('modal-reporte').classList.add('hidden');
+    }
+
+    async function cargarMultiplesFotos(event, tipo) {
+      const files = Array.from(event.target.files);
+      if (files.length === 0) return;
+
+      const loader = document.getElementById('loading-indicator');
+      loader.classList.remove('hidden');
+
+      for (const file of files) {
+        const base64 = await optimizarFotoHD(file);
+        if (tipo === 'viejas') tempViejas.push(base64);
+        else tempNuevas.push(base64);
+      }
+
+      loader.classList.add('hidden');
+      renderizarGrid(tipo);
+    }
+
+    function optimizarFotoHD(file) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            const MAX_DIM = 1280;
+            let w = img.width;
+            let h = img.height;
+
+            if (w > h) {
+              if (w > MAX_DIM) {
+                h = Math.round(h * (MAX_DIM / w));
+                w = MAX_DIM;
+              }
+            } else {
+              if (h > MAX_DIM) {
+                w = Math.round(w * (MAX_DIM / h));
+                h = MAX_DIM;
+              }
+            }
+
+            canvas.width = w;
+            canvas.height = h;
+            ctx.drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/jpeg', 0.85));
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function renderizarGrid(tipo) {
+      const grid = document.getElementById(`grid-${tipo}`);
+      const countLabel = document.getElementById(`count-${tipo}`);
+      const arr = tipo === 'viejas' ? tempViejas : tempNuevas;
+      grid.innerHTML = '';
+
+      countLabel.innerText = `${arr.length} foto(s)`;
+
+      arr.forEach((src, index) => {
+        const div = document.createElement('div');
+        div.className = "relative group h-20 bg-slate-900 rounded-lg overflow-hidden border border-slate-800";
+        div.innerHTML = `
+          <img src="${src}" class="w-full h-full object-cover">
+          <button type="button" onclick="eliminarFotoTemp('${tipo}', ${index})" class="absolute top-1 right-1 bg-red-600 hover:bg-red-500 text-white w-5 h-5 rounded-full text-[10px] font-black flex items-center justify-center shadow transition">✕</button>
+        `;
+        grid.appendChild(div);
+      });
+    }
+
+    function eliminarFotoTemp(tipo, index) {
+      if (tipo === 'viejas') tempViejas.splice(index, 1);
+      else tempNuevas.splice(index, 1);
+      renderizarGrid(tipo);
+    }
+
+    function guardarReporteTecnico() {
+      if (!db) {
+        alert("Iniciando base de datos. Por favor intenta de nuevo en un segundo.");
+        return;
+      }
+
+      const notas = document.getElementById('rep-notas').value;
+
+      const tx = db.transaction("reportes", "readwrite");
+      const store = tx.objectStore("reportes");
+
+      const reporteObj = {
+        folio: folioActualReporte,
+        notas: notas,
+        imgViejas: tempViejas,
+        imgNuevas: tempNuevas
+      };
+
+      store.put(reporteObj);
+
+      tx.oncomplete = function() {
+        const citas = JSON.parse(localStorage.getItem('citas_registradas') || '[]');
+        const cita = citas.find(c => c.folio === folioActualReporte);
+        if (cita && cita.estatus === 'Confirmada / En Espera') {
+          cita.estatus = 'Completada';
+          localStorage.setItem('citas_registradas', JSON.stringify(citas));
+        }
+
+        alert(`¡Reporte y evidencias guardados con éxito!`);
+        cerrarModalReporte();
+        cargarCitasAdmin();
+      };
+    }
+
+    function eliminarCita(folio) {
+      if (!confirm(`¿Eliminar la cita ${folio}?`)) return;
+      let citas = JSON.parse(localStorage.getItem('citas_registradas') || '[]');
+      citas = citas.filter(c => c.folio !== folio);
+      localStorage.setItem('citas_registradas', JSON.stringify(citas));
+
+      if (db) {
+        const tx = db.transaction("reportes", "readwrite");
+        tx.objectStore("reportes").delete(folio);
+      }
+
+      cargarCitasAdmin();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seguimiento en Tiempo Real - Taller Automotriz del Norte</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col justify-between">
+
+  <header class="border-b border-slate-800/80 bg-slate-950/90 sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="bg-red-600 font-black text-white text-xs px-2.5 py-1.5 rounded-lg tracking-wider">TAN</div>
+        <div>
+          <h1 class="text-xs font-black tracking-widest text-white">TALLER AUTOMOTRIZ DEL NORTE</h1>
+          <p class="text-[9px] text-red-500 font-bold tracking-widest">SEGUIMIENTO EN TIEMPO REAL</p>
+        </div>
+      </div>
+      <a href="index.html" class="text-xs font-bold text-slate-400 hover:text-white bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">+ NUEVA CITA</a>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-3xl w-full mx-auto px-4 py-12 flex flex-col justify-center">
+    <div class="bg-slate-900/90 border border-slate-800/90 rounded-3xl p-8 shadow-2xl space-y-8">
+      
+      <div class="text-center">
+        <h2 class="text-2xl font-black text-white uppercase tracking-wider">RASTREO DE SERVICIO</h2>
+        <p class="text-xs text-slate-400 mt-1">Consulta el avance de tu auto y la evidencia fotográfica múltiple.</p>
+      </div>
+
+      <div class="flex gap-3">
+        <input type="text" id="input-search-folio" placeholder="INGRESA TU FOLIO (EJ. TAN-20260920-ABCD)" onkeyup="if(event.key==='Enter') buscarCitaPorFolio()" class="flex-1 bg-slate-950 border border-slate-800 rounded-2xl p-4 text-xs font-mono text-white placeholder-slate-600 focus:border-red-500 focus:outline-none uppercase tracking-widest">
+        <button onclick="buscarCitaPorFolio()" class="px-8 py-4 bg-red-600 hover:bg-red-500 text-white font-black text-xs uppercase rounded-2xl transition shadow-lg shadow-red-600/30">BUSCAR</button>
+      </div>
+
+      <!-- Ficha de Información de Cita -->
+      <div id="resultado-rastreo" class="hidden space-y-6 pt-4 border-t border-slate-800/80">
+        
+        <div class="flex justify-between items-center bg-slate-950 p-5 rounded-2xl border border-slate-800">
+          <div>
+            <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest block">ESTATUS ACTUAL</span>
+            <span id="lbl-estatus" class="text-sm font-black text-emerald-400 uppercase tracking-wide"></span>
+          </div>
+          <div class="text-right">
+            <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest block">FOLIO</span>
+            <span id="lbl-folio" class="font-mono text-xs font-black text-red-500"></span>
+          </div>
+        </div>
+
+        <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-3 text-xs">
+          <div class="flex justify-between border-b border-slate-800/60 pb-2.5"><span class="text-slate-400">Cliente:</span><span id="lbl-cliente" class="text-white font-bold"></span></div>
+          <div class="flex justify-between border-b border-slate-800/60 pb-2.5"><span class="text-slate-400">Vehículo:</span><span id="lbl-vehiculo" class="text-white font-bold"></span></div>
+          <div class="flex justify-between border-b border-slate-800/60 pb-2.5"><span class="text-slate-400">Servicio:</span><span id="lbl-servicio" class="text-white font-bold"></span></div>
+          <div class="flex justify-between border-b border-slate-800/60 pb-2.5"><span class="text-slate-400">Fecha y Hora:</span><span id="lbl-agenda" class="text-white font-bold"></span></div>
+          <div class="flex justify-between items-center text-sm font-black pt-1"><span class="text-slate-300">Total:</span><span id="lbl-costo" class="text-red-400 font-mono text-base"></span></div>
+        </div>
+
+        <!-- REPORTE DE FOTOS MÚLTIPLES DEL MECÁNICO PARA EL CLIENTE -->
+        <div id="box-reporte-mecanico" class="hidden bg-slate-950 p-6 rounded-2xl border border-red-900/40 space-y-5">
+          <div class="flex items-center gap-2">
+            <span class="bg-red-600 text-white font-black text-[10px] px-2 py-0.5 rounded uppercase">Evidencia Técnica</span>
+            <h3 class="text-xs font-black text-white uppercase tracking-wider">Reporte de Piezas y Trabajos Realizados</h3>
+          </div>
+
+          <p id="lbl-reporte-notas" class="text-xs text-slate-300 italic bg-slate-900 p-3.5 rounded-xl border border-slate-800"></p>
+
+          <!-- Galería de Piezas Viejas -->
+          <div id="box-viejas-wrapper" class="space-y-2 hidden">
+            <span class="text-[10px] font-bold text-red-400 uppercase tracking-wider block">❌ Piezas Retiradas (Desgastadas)</span>
+            <div id="grid-client-viejas" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-80 overflow-y-auto p-1"></div>
+          </div>
+
+          <!-- Galería de Piezas Nuevas -->
+          <div id="box-nuevas-wrapper" class="space-y-2 hidden">
+            <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">✨ Piezas Nuevas Instaladas</span>
+            <div id="grid-client-nuevas" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-80 overflow-y-auto p-1"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <div id="no-encontrado" class="hidden p-4 bg-red-950/40 border border-red-800/50 rounded-2xl text-red-300 text-xs text-center font-semibold">
+        ❌ No se encontró ninguna cita registrada con el folio especificado.
+      </div>
+
+    </div>
+  </main>
+
+  <!-- MODAL DE VISUALIZACIÓN DE IMAGEN EN GRANDE (LIGHTBOX) -->
+  <div id="modal-imagen" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex flex-col items-center justify-center p-4" onclick="cerrarModalImagen()">
+    <div class="relative max-w-5xl w-full flex flex-col items-center space-y-3" onclick="event.stopPropagation()">
+      <div class="flex justify-between items-center w-full px-2">
+        <span id="modal-img-titulo" class="text-xs font-bold text-slate-300 uppercase tracking-widest"></span>
+        <button onclick="cerrarModalImagen()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold w-9 h-9 rounded-full flex items-center justify-center text-sm shadow-lg transition">✕</button>
+      </div>
+      <img id="modal-img-src" class="max-h-[85vh] w-auto object-contain rounded-2xl border border-slate-800 shadow-2xl">
+    </div>
+  </div>
+
+  <footer class="text-center py-4 text-xs text-slate-600 border-t border-slate-900">
+    © 2026 Taller Automotriz del Norte - Tuxtla Gutiérrez, Chiapas.
+  </footer>
+
+  <script>
+    let db;
+    const request = indexedDB.open("TAN_FotosDB", 1);
+
+    request.onupgradeneeded = function(e) {
+      db = e.target.result;
+      if (!db.objectStoreNames.contains("reportes")) {
+        db.createObjectStore("reportes", { keyPath: "folio" });
+      }
+    };
+
+    request.onsuccess = function(e) {
+      db = e.target.result;
+      const urlParams = new URLSearchParams(window.location.search);
+      const paramFolio = urlParams.get('folio');
+      if (paramFolio) {
+        document.getElementById('input-search-folio').value = paramFolio;
+        buscarCitaPorFolio(paramFolio);
+      }
+    };
+
+    function buscarCitaPorFolio(folioTarget = null) {
+      const inputElem = document.getElementById('input-search-folio');
+      const folio = (folioTarget || inputElem.value).trim().toUpperCase();
+      const resultBox = document.getElementById('resultado-rastreo');
+      const notFoundBox = document.getElementById('no-encontrado');
+
+      if (!folio) return;
+
+      const citas = JSON.parse(localStorage.getItem('citas_registradas') || '[]');
+      const cita = citas.find(c => c.folio && c.folio.trim().toUpperCase() === folio);
+
+      if (cita) {
+        document.getElementById('lbl-folio').innerText = cita.folio;
+        document.getElementById('lbl-cliente').innerText = cita.cliente;
+        document.getElementById('lbl-vehiculo').innerText = cita.vehiculo;
+        document.getElementById('lbl-servicio').innerText = cita.servicio;
+        document.getElementById('lbl-agenda').innerText = `${cita.fecha} a las ${cita.hora}`;
+        document.getElementById('lbl-costo').innerText = cita.costo;
+        document.getElementById('lbl-estatus').innerText = cita.estatus || 'Confirmada / En Espera';
+
+        const boxReporte = document.getElementById('box-reporte-mecanico');
+        const gridViejas = document.getElementById('grid-client-viejas');
+        const gridNuevas = document.getElementById('grid-client-nuevas');
+        const boxViejasWrapper = document.getElementById('box-viejas-wrapper');
+        const boxNuevasWrapper = document.getElementById('box-nuevas-wrapper');
+
+        gridViejas.innerHTML = '';
+        gridNuevas.innerHTML = '';
+
+        // Buscar reporte en IndexedDB
+        if (db) {
+          const tx = db.transaction("reportes", "readonly");
+          const store = tx.objectStore("reportes");
+          const req = store.get(folio);
+
+          req.onsuccess = function() {
+            const reporte = req.result || cita.reporte;
+
+            if (reporte) {
+              boxReporte.classList.remove('hidden');
+              document.getElementById('lbl-reporte-notas').innerText = reporte.notas || 'Servicio completado conforme al protocolo del taller.';
+
+              let listaViejas = reporte.imgViejas || (reporte.imgVieja ? [reporte.imgVieja] : []);
+              let listaNuevas = reporte.imgNuevas || (reporte.imgNueva ? [reporte.imgNueva] : []);
+
+              if (listaViejas.length > 0) {
+                boxViejasWrapper.classList.remove('hidden');
+                listaViejas.forEach(src => {
+                  const img = document.createElement('img');
+                  img.src = src;
+                  img.className = "w-full h-28 object-cover rounded-xl border border-red-900/40 cursor-pointer hover:opacity-90 transition transform hover:scale-[1.03]";
+                  img.onclick = () => abrirModalImagen(src, 'Pieza Retirada (Desgastada)');
+                  gridViejas.appendChild(img);
+                });
+              } else {
+                boxViejasWrapper.classList.add('hidden');
+              }
+
+              if (listaNuevas.length > 0) {
+                boxNuevasWrapper.classList.remove('hidden');
+                listaNuevas.forEach(src => {
+                  const img = document.createElement('img');
+                  img.src = src;
+                  img.className = "w-full h-28 object-cover rounded-xl border border-emerald-900/40 cursor-pointer hover:opacity-90 transition transform hover:scale-[1.03]";
+                  img.onclick = () => abrirModalImagen(src, 'Pieza Nueva Instalada');
+                  gridNuevas.appendChild(img);
+                });
+              } else {
+                boxNuevasWrapper.classList.add('hidden');
+              }
+            } else {
+              boxReporte.classList.add('hidden');
+            }
+          };
+        }
+
+        resultBox.classList.remove('hidden');
+        notFoundBox.classList.add('hidden');
+      } else {
+        resultBox.classList.add('hidden');
+        notFoundBox.classList.remove('hidden');
+      }
+    }
+
+    function abrirModalImagen(src, titulo) {
+      document.getElementById('modal-img-src').src = src;
+      document.getElementById('modal-img-titulo').innerText = titulo;
+      document.getElementById('modal-imagen').classList.remove('hidden');
+    }
+
+    function cerrarModalImagen() {
+      document.getElementById('modal-imagen').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>
