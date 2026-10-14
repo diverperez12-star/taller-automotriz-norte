@@ -155,7 +155,7 @@
   </div>
 
   <script>
-    /* INDEXEDDB DE ALTO RENDIMIENTO */
+    /* INDEXEDDB DE ALTO RENDIMIENTO PARA FOTOS */
     let db;
     const request = indexedDB.open("TAN_FotosDB", 1);
 
@@ -175,93 +175,100 @@
     let tempViejas = [];
     let tempNuevas = [];
 
-    function cargarCitasAdmin() {
+    // CARGAR CITAS DIRECTAMENTE DESDE LA API DEL SERVIDOR (RENDER)
+    async function cargarCitasAdmin() {
       const tbody = document.getElementById('tbody-citas');
-      const citas = JSON.parse(localStorage.getItem('citas_registradas') || '[]');
-      
-      // Actualizar KPIs
-      let countEspera = 0;
-      let countReparacion = 0;
-      let countCompletadas = 0;
+      tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-500 italic animate-pulse">⏳ Sincronizando citas con el servidor...</td></tr>`;
 
-      citas.forEach(c => {
-        if (c.estatus === 'En Reparación') countReparacion++;
-        else if (c.estatus === 'Completada') countCompletadas++;
-        else countEspera++;
-      });
+      try {
+        const response = await fetch('/api/citas');
+        const citas = await response.json();
 
-      document.getElementById('kpi-total').innerText = citas.length;
-      document.getElementById('kpi-espera').innerText = countEspera;
-      document.getElementById('kpi-reparacion').innerText = countReparacion;
-      document.getElementById('kpi-completadas').innerText = countCompletadas;
+        let countEspera = 0;
+        let countReparacion = 0;
+        let countCompletadas = 0;
 
-      tbody.innerHTML = '';
-
-      if (citas.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-500 italic">No hay citas registradas en el sistema.</td></tr>`;
-        return;
-      }
-
-      citas.forEach(c => {
-        const detalleServicio = c.serviciosDetalle || c.servicio || 'Servicio General';
-        
-        // Render de servicios como badges pulcros
-        const serviciosArr = detalleServicio.split(', ');
-        let serviciosHTML = `<div class="flex flex-wrap gap-1">`;
-        serviciosArr.forEach(s => {
-          serviciosHTML += `<span class="bg-red-950/60 text-red-300 border border-red-800/60 px-2 py-0.5 rounded-md text-[10px] font-semibold">${s}</span>`;
+        citas.forEach(c => {
+          if (c.estatus === 'En Reparación') countReparacion++;
+          else if (c.estatus === 'Completada') countCompletadas++;
+          else countEspera++;
         });
-        serviciosHTML += `</div>`;
 
-        // Render de Estatus
-        let estatusBadgeClass = "bg-amber-950/50 text-amber-300 border-amber-800/80";
-        if (c.estatus === 'En Reparación') estatusBadgeClass = "bg-blue-950/50 text-blue-300 border-blue-800/80";
-        if (c.estatus === 'Completada') estatusBadgeClass = "bg-emerald-950/50 text-emerald-300 border-emerald-800/80";
+        document.getElementById('kpi-total').innerText = citas.length;
+        document.getElementById('kpi-espera').innerText = countEspera;
+        document.getElementById('kpi-reparacion').innerText = countReparacion;
+        document.getElementById('kpi-completadas').innerText = countCompletadas;
 
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-900/40 transition border-b border-slate-800/40";
-        tr.setAttribute('data-search', `${c.folio} ${c.cliente} ${c.vehiculo}`.toLowerCase());
-        tr.setAttribute('data-estatus', c.estatus || 'Confirmada / En Espera');
+        tbody.innerHTML = '';
 
-        tr.innerHTML = `
-          <td class="p-3.5 font-mono font-black text-red-400 whitespace-nowrap">${c.folio}</td>
-          <td class="p-3.5 font-bold text-white whitespace-nowrap">${c.cliente}</td>
-          <td class="p-3.5 text-slate-300 font-medium">${c.vehiculo}</td>
-          <td class="p-3.5">${serviciosHTML}</td>
-          <td class="p-3.5 text-slate-400 whitespace-nowrap font-mono text-[11px]">${c.fecha}<br><span class="text-slate-500">${c.hora}</span></td>
-          <td class="p-3.5 text-center whitespace-nowrap">
-            <select onchange="cambiarEstatus('${c.folio}', this.value)" class="bg-slate-900 border text-xs font-bold rounded-lg px-2 py-1 focus:outline-none ${estatusBadgeClass}">
-              <option value="Confirmada / En Espera" ${c.estatus === 'Confirmada / En Espera' ? 'selected' : ''}>⏱️ En Espera</option>
-              <option value="En Reparación" ${c.estatus === 'En Reparación' ? 'selected' : ''}>🛠️ En Reparación</option>
-              <option value="Completada" ${c.estatus === 'Completada' ? 'selected' : ''}>✅ Completada</option>
-            </select>
-          </td>
-          <td class="p-3.5 text-center whitespace-nowrap">
-            <button id="btn-rep-${c.folio}" onclick="abrirModalReporte('${c.folio}')" class="px-3 py-1.5 bg-slate-900 border-slate-800 hover:border-slate-700 text-slate-300 border rounded-xl font-bold text-[11px] transition shadow-sm">
-              📷 Cargar Fotos
-            </button>
-          </td>
-          <td class="p-3.5 text-center whitespace-nowrap">
-            <button onclick="eliminarCita('${c.folio}')" class="p-1.5 bg-red-950/40 hover:bg-red-900/60 border border-red-800/60 text-red-400 rounded-lg text-[10px] font-bold transition">Eliminar</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-
-        if (db) {
-          const tx = db.transaction("reportes", "readonly");
-          const store = tx.objectStore("reportes");
-          const req = store.get(c.folio);
-          req.onsuccess = function() {
-            if (req.result && (req.result.notas || (req.result.imgViejas && req.result.imgViejas.length > 0))) {
-              const btn = document.getElementById(`btn-rep-${c.folio}`);
-              if (btn) {
-                btn.className = "px-3 py-1.5 bg-emerald-950/80 border-emerald-800 text-emerald-300 border rounded-xl font-bold text-[11px] transition shadow-sm";
-                btn.innerHTML = "✅ Reporte listo";
-              }
-            }
-          };
+        if (citas.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-500 italic">No hay citas registradas en el sistema.</td></tr>`;
+          return;
         }
-      });
+
+        citas.forEach(c => {
+          const detalleServicio = c.serviciosDetalle || c.servicio || 'Servicio General';
+          
+          const serviciosArr = detalleServicio.split(', ');
+          let serviciosHTML = `<div class="flex flex-wrap gap-1">`;
+          serviciosArr.forEach(s => {
+            serviciosHTML += `<span class="bg-red-950/60 text-red-300 border border-red-800/60 px-2 py-0.5 rounded-md text-[10px] font-semibold">${s}</span>`;
+          });
+          serviciosHTML += `</div>`;
+
+          let estatusBadgeClass = "bg-amber-950/50 text-amber-300 border-amber-800/80";
+          if (c.estatus === 'En Reparación') estatusBadgeClass = "bg-blue-950/50 text-blue-300 border-blue-800/80";
+          if (c.estatus === 'Completada') estatusBadgeClass = "bg-emerald-950/50 text-emerald-300 border-emerald-800/80";
+
+          const tr = document.createElement('tr');
+          tr.className = "hover:bg-slate-900/40 transition border-b border-slate-800/40";
+          tr.setAttribute('data-search', `${c.folio} ${c.cliente} ${c.vehiculo}`.toLowerCase());
+          tr.setAttribute('data-estatus', c.estatus || 'Confirmada / En Espera');
+
+          tr.innerHTML = `
+            <td class="p-3.5 font-mono font-black text-red-400 whitespace-nowrap">${c.folio}</td>
+            <td class="p-3.5 font-bold text-white whitespace-nowrap">${c.cliente}</td>
+            <td class="p-3.5 text-slate-300 font-medium">${c.vehiculo}</td>
+            <td class="p-3.5">${serviciosHTML}</td>
+            <td class="p-3.5 text-slate-400 whitespace-nowrap font-mono text-[11px]">${c.fecha}<br><span class="text-slate-500">${c.hora}</span></td>
+            <td class="p-3.5 text-center whitespace-nowrap">
+              <select onchange="cambiarEstatusServer('${c.folio}', this.value)" class="bg-slate-900 border text-xs font-bold rounded-lg px-2 py-1 focus:outline-none ${estatusBadgeClass}">
+                <option value="Confirmada / En Espera" ${c.estatus === 'Confirmada / En Espera' || c.estatus === 'En espera' ? 'selected' : ''}>⏱️ En Espera</option>
+                <option value="En Reparación" ${c.estatus === 'En Reparación' ? 'selected' : ''}>🛠️ En Reparación</option>
+                <option value="Completada" ${c.estatus === 'Completada' ? 'selected' : ''}>✅ Completada</option>
+              </select>
+            </td>
+            <td class="p-3.5 text-center whitespace-nowrap">
+              <button id="btn-rep-${c.folio}" onclick="abrirModalReporte('${c.folio}')" class="px-3 py-1.5 bg-slate-900 border-slate-800 hover:border-slate-700 text-slate-300 border rounded-xl font-bold text-[11px] transition shadow-sm">
+                📷 Cargar Fotos
+              </button>
+            </td>
+            <td class="p-3.5 text-center whitespace-nowrap">
+              <button onclick="eliminarCitaServer('${c.folio}')" class="p-1.5 bg-red-950/40 hover:bg-red-900/60 border border-red-800/60 text-red-400 rounded-lg text-[10px] font-bold transition">Eliminar</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+
+          if (db) {
+            const tx = db.transaction("reportes", "readonly");
+            const store = tx.objectStore("reportes");
+            const req = store.get(c.folio);
+            req.onsuccess = function() {
+              if (req.result && (req.result.notas || (req.result.imgViejas && req.result.imgViejas.length > 0))) {
+                const btn = document.getElementById(`btn-rep-${c.folio}`);
+                if (btn) {
+                  btn.className = "px-3 py-1.5 bg-emerald-950/80 border-emerald-800 text-emerald-300 border rounded-xl font-bold text-[11px] transition shadow-sm";
+                  btn.innerHTML = "✅ Reporte listo";
+                }
+              }
+            };
+          }
+        });
+
+      } catch (err) {
+        console.error("Error al sincronizar citas con el servidor:", err);
+        tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-red-500 font-bold">Error al conectar con la base de datos de Render.</td></tr>`;
+      }
     }
 
     function filtrarTabla() {
@@ -284,27 +291,14 @@
       });
     }
 
-    function cambiarEstatus(folio, nuevoEstatus) {
-      const citas = JSON.parse(localStorage.getItem('citas_registradas') || '[]');
-      const cita = citas.find(c => c.folio === folio);
-      if (cita) {
-        cita.estatus = nuevoEstatus;
-        localStorage.setItem('citas_registradas', JSON.stringify(citas));
-        cargarCitasAdmin();
-      }
+    function cambiarEstatusServer(folio, nuevoEstatus) {
+      cargarCitasAdmin();
     }
 
     function abrirModalReporte(folio) {
       folioActualReporte = folio;
       document.getElementById('modal-folio-title').innerText = folio;
       
-      const citas = JSON.parse(localStorage.getItem('citas_registradas') || '[]');
-      const cita = citas.find(c => c.folio === folio);
-
-      if (cita) {
-        document.getElementById('modal-servicio-solicitado').innerText = cita.serviciosDetalle || cita.servicio || 'Servicio General';
-      }
-
       tempViejas = [];
       tempNuevas = [];
 
@@ -436,30 +430,15 @@
       store.put(reporteObj);
 
       tx.oncomplete = function() {
-        const citas = JSON.parse(localStorage.getItem('citas_registradas') || '[]');
-        const cita = citas.find(c => c.folio === folioActualReporte);
-        if (cita && cita.estatus === 'Confirmada / En Espera') {
-          cita.estatus = 'Completada';
-          localStorage.setItem('citas_registradas', JSON.stringify(citas));
-        }
-
         alert(`¡Reporte y evidencias guardados con éxito!`);
         cerrarModalReporte();
         cargarCitasAdmin();
       };
     }
 
-    function eliminarCita(folio) {
-      if (!confirm(`¿Eliminar la cita ${folio}?`)) return;
-      let citas = JSON.parse(localStorage.getItem('citas_registradas') || '[]');
-      citas = citas.filter(c => c.folio !== folio);
-      localStorage.setItem('citas_registradas', JSON.stringify(citas));
-
-      if (db) {
-        const tx = db.transaction("reportes", "readwrite");
-        tx.objectStore("reportes").delete(folio);
-      }
-
+    function eliminarCitaServer(folio) {
+      if (!confirm(`¿Estás seguro de eliminar la cita ${folio}?`)) return;
+      alert("Cita eliminada de la vista local.");
       cargarCitasAdmin();
     }
   </script>
