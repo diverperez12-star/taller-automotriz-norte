@@ -133,7 +133,7 @@
           </div>
           <div class="space-y-1.5">
             <label class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Teléfono / WhatsApp *</label>
-            <input type="tel" id="input-telefono" placeholder="Ej. 961 123 4567" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-xs text-white placeholder-slate-600 focus:border-red-500 focus:outline-none">
+            <input type="tel" id="input-telefono" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);" autocomplete="off" placeholder="Ej. 9611234567" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-xs text-white placeholder-slate-600 focus:border-red-500 focus:outline-none">
           </div>
         </div>
 
@@ -336,7 +336,7 @@
         </div>
 
         <div class="inline-block bg-slate-950 p-5 rounded-3xl border border-slate-800 shadow-xl space-y-3">
-          <!-- Generador funcional de Código QR dinámico -->
+          <!-- Generador funcional de Código QR dinámico con parámetro folio= -->
           <img id="qr-img" src="" alt="Código QR de Cita" class="w-40 h-40 mx-auto rounded-xl bg-white p-2">
           <p class="text-[10px] font-mono text-slate-400 font-bold uppercase">Folio: <span id="final-folio" class="text-red-500"></span></p>
         </div>
@@ -361,7 +361,7 @@
 
   <script src="{{ url_for('static', filename='app.js') }}"></script>
   <script>
-    // Complemento dinámico para generar el código QR funcional al confirmar
+    // Complemento dinámico para generar el código QR funcional con ?folio=
     const originalConfirm = window.confirmarYGuardarCita;
     window.confirmarYGuardarCita = function() {
       if (typeof originalConfirm === 'function') {
@@ -369,7 +369,7 @@
       }
       const folio = document.getElementById('res-folio').innerText;
       if (folio) {
-        const urlSeguimiento = `${window.location.origin}/seguimiento?id=${folio}`;
+        const urlSeguimiento = `${window.location.origin}/seguimiento?folio=${folio}`;
         document.getElementById('qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(urlSeguimiento)}`;
         document.getElementById('final-folio').innerText = folio;
       }
