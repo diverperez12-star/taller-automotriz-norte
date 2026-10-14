@@ -6,11 +6,11 @@ app = Flask(__name__, template_folder='TEMPLATES', static_folder='static')
 def init_db():
     conn = sqlite3.connect('taller.db')
     cursor = conn.cursor()
-    # Se añade la columna 'hora' a la estructura de la tabla
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS citas (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             folio TEXT,
+            cliente TEXT,
             nombre TEXT,
             telefono TEXT,
             vehiculo TEXT,
@@ -22,6 +22,12 @@ def init_db():
             estatus TEXT DEFAULT 'En espera'
         )
     ''')
+    # Migración automática si la tabla ya existía sin estas columnas
+    for col, col_type in [('cliente', 'TEXT'), ('nombre', 'TEXT'), ('hora', 'TEXT')]:
+        try:
+            cursor.execute(f"ALTER TABLE citas ADD COLUMN {col} {col_type}")
+        except sqlite3.OperationalError:
+            pass
     conn.commit()
     conn.close()
 
@@ -54,8 +60,7 @@ def api_citas():
     citas_list = []
     for row in rows:
         d = dict(row)
-        # Normalizar claves para evitar cualquier 'undefined'
-        d['cliente'] = d.get('nombre') or d.get('cliente') or 'Sin nombre'
+        d['cliente'] = d.get('cliente') or d.get('nombre') or 'Sin nombre'
         d['nombre'] = d['cliente']
         d['hora'] = d.get('hora') or ''
         citas_list.append(d)
@@ -71,10 +76,11 @@ def guardar_cita():
         conn = sqlite3.connect('taller.db')
         cursor = conn.cursor()
         cursor.execute('''
-            INSERT INTO citas (folio, nombre, telefono, vehiculo, vin, servicio, fecha, hora, costo, estatus)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO citas (folio, cliente, nombre, telefono, vehiculo, vin, servicio, fecha, hora, costo, estatus)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             datos.get('folio'),
+            nombre_val,
             nombre_val,
             datos.get('telefono'),
             datos.get('vehiculo'),
@@ -89,6 +95,7 @@ def guardar_cita():
         conn.close()
         return jsonify({"success": True})
     except Exception as e:
+        print("Error al guardar cita:", str(e))
         return jsonify({"success": False, "error": str(e)}), 400
 
 if __name__ == '__main__':
