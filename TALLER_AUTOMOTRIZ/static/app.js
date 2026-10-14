@@ -517,19 +517,21 @@ function obtenerNombresServiciosSeleccionados() {
 function confirmarYGuardarCita() {
   const fechaVal = document.getElementById('fecha-cita').value;
   const horaVal = document.getElementById('hora-seleccionada').value;
-  const fechaHoraCompleta = `${fechaVal} ${horaVal}`;
 
   const nombreVal = document.getElementById('input-nombre').value.trim();
   const telefonoVal = document.getElementById('input-telefono').value.trim();
 
+  // Se incluyen 'cliente' y 'hora' por separado para que el Admin los lea correctamente sin undefined
   const nuevaCita = {
     folio: currentFolio,
+    cliente: nombreVal,
     nombre: nombreVal,
     telefono: telefonoVal,
     vehiculo: document.getElementById('res-vehiculo').innerText,
     vin: document.getElementById('input-vin').value.toUpperCase(),
     servicio: obtenerNombresServiciosSeleccionados(),
-    fecha: fechaHoraCompleta,
+    fecha: fechaVal,
+    hora: horaVal,
     costo: document.getElementById('res-costo').innerText,
     estatus: "En espera"
   };
@@ -556,7 +558,10 @@ function confirmarYGuardarCita() {
   localStorage.setItem('citas_registradas', JSON.stringify(citas));
 
   document.getElementById('final-folio').innerText = currentFolio;
-  document.getElementById('qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${currentFolio}`;
+  
+  // QR con URL completa de seguimiento
+  const urlSeguimiento = `${window.location.origin}/seguimiento?folio=${currentFolio}`;
+  document.getElementById('qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(urlSeguimiento)}`;
 
   goToStep(5);
 }
