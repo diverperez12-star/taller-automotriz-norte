@@ -79,7 +79,6 @@ def api_citas():
         cliente_val = d.get('cliente') or d.get('nombre') or 'Sin nombre'
         vehiculo_val = d.get('vehiculo') or ''
         
-        # Intentar extraer marca y modelo del texto del vehículo (ej: "Mazda Mazda 3 (2023) - ...")
         marca_extraida = "General"
         modelo_extraido = vehiculo_val
         for marca_posible in ["Mazda", "Nissan", "Chevrolet", "Volkswagen", "Toyota", "Ford", "Honda", "Hyundai", "Kia", "Renault", "Suzuki", "SEAT", "Peugeot", "Jeep", "RAM"]:
@@ -100,7 +99,6 @@ def api_citas():
         d['hora_cita'] = d.get('hora') or ''
         d['fecha_registro'] = d.get('fecha') or ''
         
-        # Campos que faltaban rellenados automáticamente
         d['marca'] = marca_extraida
         d['modelo'] = modelo_extraido
         d['anio'] = 2026
@@ -119,7 +117,6 @@ def guardar_cita():
         if not datos:
             return jsonify({"success": False, "error": "No se recibieron datos JSON"}), 400
 
-        # Validación estricta en backend: El taller no labora los domingos (weekday 6)
         fecha_str = datos.get('fecha')
         if fecha_str:
             fecha_obj = datetime.strptime(fecha_str, '%Y-%m-%d')
@@ -153,9 +150,7 @@ def guardar_cita():
         print("Error al guardar cita:", str(e))
         return jsonify({"success": False, "error": str(e)}), 400
 
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)
-    @app.route('/api/actualizar-estatus', methods=['POST'])
+@app.route('/api/actualizar-estatus', methods=['POST'])
 def actualizar_estatus():
     try:
         datos = request.get_json(force=True)
@@ -185,3 +180,6 @@ def eliminar_cita():
         return jsonify({"success": True})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 400
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
