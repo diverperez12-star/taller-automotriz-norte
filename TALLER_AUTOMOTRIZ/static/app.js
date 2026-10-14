@@ -541,58 +541,47 @@ async function confirmarYGuardarCita() {
   const botonConfirmar = document.querySelector('button[onclick*="confirmarYGuardarCita"]');
   if (botonConfirmar) {
     botonConfirmar.disabled = true;
-    botonConfirmar.innerText = "DESPERTANDO SERVIDOR...";
+    botonConfirmar.innerText = "GUARDANDO CITA...";
   }
 
-  let guardadoExitoso = false;
-  let intentos = 5; // Aumentamos a 5 intentos
+  try {
+    const response = await fetch('/api/guardar-cita', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(nuevaCita)
+    });
 
-  while (intentos > 0 && !guardadoExitoso) {
-    try {
-      // Usar la ruta absoluta con el dominio actual para evitar bloqueos de fetch relativo
-      const urlEndpoint = `${window.location.origin}/api/guardar-cita`;
+    const data = await response.json();
+    
+    if (botonConfirmar) {
+      botonConfirmar.disabled = false;
+      botonConfirmar.innerText = "CONFIRMAR Y AGENDAR CITA ✓";
+    }
+
+    if (response.ok && data.success) {
+      console.log("Cita guardada en SQLite con éxito:", data);
       
-      const response = await fetch(urlEndpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(nuevaCita)
-      });
+      // Respaldo local secundario en navegador
+      const citas = JSON.parse(localStorage.getItem('citas_registradas') || '[]');
+      citas.push(nuevaCita);
+      localStorage.setItem('citas_registradas', JSON.stringify(citas));
 
-      const data = await response.json();
-      if (response.ok && data.success) {
-        guardadoExitoso = true;
-        console.log("Cita guardada en SQLite con éxito:", data);
-      }
-    } catch (err) {
-      console.warn(`Intento fallido (${intentos} restantes), esperando a que Render despierte...`, err);
+      document.getElementById('final-folio').innerText = currentFolio;
+      goToStep(5);
+    } else {
+      alert("El servidor no pudo guardar la cita. Revisa los datos he inténtalo de nuevo.");
     }
 
-    intentos--;
-    if (!guardadoExitoso && intentos > 0) {
-      // Esperar 3 segundos completos entre cada intento para darle aire a Render
-      await new Promise(resolve => setTimeout(resolve, 3000));
+  } catch (err) {
+    if (botonConfirmar) {
+      botonConfirmar.disabled = false;
+      botonConfirmar.innerText = "CONFIRMAR Y AGENDAR CITA ✓";
     }
+    console.error("Error al conectar con la API:", err);
+    alert("Error de conexión con el servidor. Verifica que tu backend esté corriendo.");
   }
-
-  if (botonConfirmar) {
-    botonConfirmar.disabled = false;
-    botonConfirmar.innerText = "CONFIRMAR Y AGENDAR CITA ✓";
-  }
-
-  if (!guardadoExitoso) {
-    alert("El servidor en la nube de Render está tardando en encender. Dale un toque de recarga a la página principal y vuelve a darle a agendar.");
-    return;
-  }
-
-  const citas = JSON.parse(localStorage.getItem('citas_registradas') || '[]');
-  citas.push(nuevaCita);
-  localStorage.setItem('citas_registradas', JSON.stringify(citas));
-
-  document.getElementById('final-folio').innerText = currentFolio;
-
-  goToStep(5);
 }
 
 function obtenerEnlaceSeguimiento() {
