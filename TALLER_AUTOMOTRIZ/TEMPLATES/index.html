@@ -325,7 +325,7 @@
         </div>
       </div>
 
-      <!-- PASO 5: CONFIRMACIÓN Y COMPARTIR ENLACE  -->
+     <!-- PASO 5: CONFIRMACIÓN Y COMPARTIR ENLACE -->
 <div id="step-5" class="hidden space-y-6 text-center">
   <div class="bg-emerald-950/40 border border-emerald-800/50 rounded-2xl p-6 space-y-3">
     <div class="w-12 h-12 bg-emerald-600 text-white rounded-full flex items-center justify-center mx-auto text-xl font-black">✓</div>
@@ -334,7 +334,14 @@
     <div id="final-folio" class="text-lg font-mono font-black text-red-500 bg-slate-950 py-2 px-4 rounded-xl inline-block border border-slate-800"></div>
   </div>
 
-  <p class="text-xs text-slate-400">Guarda o comparte tu enlace de seguimiento personalizado para consultar el estatus de tu auto en cualquier momento:</p>
+  <!-- Botón de Rastreo Directo -->
+  <div>
+    <button onclick="irARastrear()" class="w-full sm:w-auto px-8 py-4 bg-red-600 hover:bg-red-500 text-white font-black text-xs uppercase rounded-2xl transition shadow-lg shadow-red-600/30 tracking-wider">
+      RASTREAR ESTADO EN TIEMPO REAL
+    </button>
+  </div>
+
+  <p class="text-xs text-slate-400 pt-2">También puedes compartir tu enlace de seguimiento por WhatsApp o copiarlo:</p>
 
   <div class="flex flex-col sm:flex-row gap-3 justify-center">
     <button onclick="copiarEnlaceSeguimiento()" class="px-6 py-3.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase rounded-2xl border border-slate-800 transition flex items-center justify-center gap-2">
