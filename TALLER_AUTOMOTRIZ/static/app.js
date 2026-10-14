@@ -538,18 +538,21 @@ async function confirmarYGuardarCita() {
     estatus: "En espera"
   };
 
-  const botonConfirmar = document.querySelector('button[onclick*="confirmarYGuardarCita"]') || event?.target;
+  const botonConfirmar = document.querySelector('button[onclick*="confirmarYGuardarCita"]');
   if (botonConfirmar) {
     botonConfirmar.disabled = true;
-    botonConfirmar.innerText = "CONECTANDO CON EL SERVIDOR...";
+    botonConfirmar.innerText = "DESPERTANDO SERVIDOR...";
   }
 
   let guardadoExitoso = false;
-  let intentos = 3;
+  let intentos = 5; // Aumentamos a 5 intentos
 
   while (intentos > 0 && !guardadoExitoso) {
     try {
-      const response = await fetch('/api/guardar-cita', {
+      // Usar la ruta absoluta con el dominio actual para evitar bloqueos de fetch relativo
+      const urlEndpoint = `${window.location.origin}/api/guardar-cita`;
+      
+      const response = await fetch(urlEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -563,12 +566,13 @@ async function confirmarYGuardarCita() {
         console.log("Cita guardada en SQLite con éxito:", data);
       }
     } catch (err) {
-      console.warn(`Intento fallido (${intentos} restantes), el servidor de Render puede estar despertando...`, err);
+      console.warn(`Intento fallido (${intentos} restantes), esperando a que Render despierte...`, err);
     }
 
     intentos--;
     if (!guardadoExitoso && intentos > 0) {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Esperar 3 segundos completos entre cada intento para darle aire a Render
+      await new Promise(resolve => setTimeout(resolve, 3000));
     }
   }
 
@@ -578,7 +582,7 @@ async function confirmarYGuardarCita() {
   }
 
   if (!guardadoExitoso) {
-    alert("El servidor en la nube tardó en responder (Render estaba suspendido). Por favor, inténtalo de nuevo.");
+    alert("El servidor en la nube de Render está tardando en encender. Dale un toque de recarga a la página principal y vuelve a darle a agendar.");
     return;
   }
 
