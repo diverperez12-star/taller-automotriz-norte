@@ -1,5 +1,6 @@
 from flask import Flask, render_template, jsonify, request
 import sqlite3
+from datetime import datetime
 
 app = Flask(__name__, template_folder='TEMPLATES', static_folder='static')
 
@@ -88,6 +89,13 @@ def guardar_cita():
         datos = request.get_json(force=True)
         if not datos:
             return jsonify({"success": False, "error": "No se recibieron datos JSON"}), 400
+
+        # Validación estricta en backend: El taller no labora los domingos (weekday 6)
+        fecha_str = datos.get('fecha')
+        if fecha_str:
+            fecha_obj = datetime.strptime(fecha_str, '%Y-%m-%d')
+            if fecha_obj.weekday() == 6:
+                return jsonify({"success": False, "error": "El taller no labora los domingos. Selecciona otro día."}), 400
 
         nombre_val = datos.get('nombre') or datos.get('cliente') or 'Sin nombre'
         
