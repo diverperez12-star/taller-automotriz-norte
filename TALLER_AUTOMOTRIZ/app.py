@@ -76,28 +76,37 @@ def api_citas():
     citas_list = []
     for row in rows:
         d = dict(row)
-        # Mapeo exacto para que Power BI reconozca las columnas sin arrojar null
         cliente_val = d.get('cliente') or d.get('nombre') or 'Sin nombre'
+        vehiculo_val = d.get('vehiculo') or ''
         
+        # Intentar extraer marca y modelo del texto del vehículo (ej: "Mazda Mazda 3 (2023) - ...")
+        marca_extraida = "General"
+        modelo_extraido = vehiculo_val
+        for marca_posible in ["Mazda", "Nissan", "Chevrolet", "Volkswagen", "Toyota", "Ford", "Honda", "Hyundai", "Kia", "Renault", "Suzuki", "SEAT", "Peugeot", "Jeep", "RAM"]:
+            if marca_posible.lower() in vehiculo_val.lower():
+                marca_extraida = marca_posible
+                break
+
         d['cliente'] = cliente_val
         d['nombre'] = cliente_val
         d['folio'] = d.get('folio') or ''
         d['telefono'] = d.get('telefono') or ''
-        d['vehiculo'] = d.get('vehiculo') or ''
+        d['vehiculo'] = vehiculo_val
         d['vin'] = d.get('vin') or ''
         
-        # Mapeos especiales para Power Query
         d['costo_estimado'] = d.get('costo') or '$0 MXN'
         d['estado'] = d.get('estatus') or 'En espera'
         d['fecha_cita'] = d.get('fecha') or ''
         d['hora_cita'] = d.get('hora') or ''
-        d['fecha_registro'] = d.get('fecha') or '' # Valor por defecto si no existe
-        d['marca'] = '' # Rellenar si tu tabla separa marcas
-        d['modelo'] = ''
+        d['fecha_registro'] = d.get('fecha') or ''
+        
+        # Campos que faltaban rellenados automáticamente
+        d['marca'] = marca_extraida
+        d['modelo'] = modelo_extraido
         d['anio'] = 2026
         d['tipo_servicio'] = d.get('servicio') or ''
-        d['modalidad_reporte'] = ''
-        d['tipo_uso'] = ''
+        d['modalidad_reporte'] = "Presencial / Taller"
+        d['tipo_uso'] = "Particular"
         
         citas_list.append(d)
         
