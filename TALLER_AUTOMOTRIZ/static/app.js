@@ -563,7 +563,6 @@ async function confirmarYGuardarCita() {
     if (response.ok && data.success) {
       console.log("Cita guardada en SQLite con éxito:", data);
       
-      // Respaldo local secundario en navegador
       const citas = JSON.parse(localStorage.getItem('citas_registradas') || '[]');
       citas.push(nuevaCita);
       localStorage.setItem('citas_registradas', JSON.stringify(citas));
@@ -571,7 +570,8 @@ async function confirmarYGuardarCita() {
       document.getElementById('final-folio').innerText = currentFolio;
       goToStep(5);
     } else {
-      alert("El servidor no pudo guardar la cita. Revisa los datos he inténtalo de nuevo.");
+      console.error("Error devuelto por el servidor:", data);
+      alert("El servidor no pudo guardar la cita: " + (data.error || "Error desconocido"));
     }
 
   } catch (err) {
@@ -580,7 +580,7 @@ async function confirmarYGuardarCita() {
       botonConfirmar.innerText = "CONFIRMAR Y AGENDAR CITA ✓";
     }
     console.error("Error al conectar con la API:", err);
-    alert("Error de conexión con el servidor. Verifica que tu backend esté corriendo.");
+    alert("Error de conexión con el servidor.");
   }
 }
 
