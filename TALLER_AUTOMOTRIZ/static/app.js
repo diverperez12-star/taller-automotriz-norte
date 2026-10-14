@@ -538,7 +538,6 @@ async function confirmarYGuardarCita() {
     estatus: "En espera"
   };
 
-  // Referencia al botón de confirmación para mostrar indicador visual si Render está despertando
   const botonConfirmar = document.querySelector('button[onclick*="confirmarYGuardarCita"]') || event?.target;
   if (botonConfirmar) {
     botonConfirmar.disabled = true;
@@ -546,7 +545,7 @@ async function confirmarYGuardarCita() {
   }
 
   let guardadoExitoso = false;
-  let intentos = 3; // Reintentar hasta 3 veces por si el servidor de Render está dormido
+  let intentos = 3;
 
   while (intentos > 0 && !guardadoExitoso) {
     try {
@@ -569,12 +568,10 @@ async function confirmarYGuardarCita() {
 
     intentos--;
     if (!guardadoExitoso && intentos > 0) {
-      // Esperar 2 segundos antes de reintentar para darle tiempo a Render de arrancar
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
   }
 
-  // Restaurar el botón
   if (botonConfirmar) {
     botonConfirmar.disabled = false;
     botonConfirmar.innerText = "CONFIRMAR Y AGENDAR CITA ✓";
@@ -585,14 +582,12 @@ async function confirmarYGuardarCita() {
     return;
   }
 
-  // Respaldo local secundario en navegador
   const citas = JSON.parse(localStorage.getItem('citas_registradas') || '[]');
   citas.push(nuevaCita);
   localStorage.setItem('citas_registradas', JSON.stringify(citas));
 
   document.getElementById('final-folio').innerText = currentFolio;
 
-  // Avanzar a la pantalla de éxito
   goToStep(5);
 }
 
