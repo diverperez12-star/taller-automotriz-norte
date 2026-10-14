@@ -197,7 +197,7 @@
 
         <div class="space-y-1.5">
           <label class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Número de Serie (VIN / Chasis) *</label>
-          <input type="text" id="input-vin" placeholder="Ej. 1FA6P8CF0H5100000 (17 dígitos)" class="w-full uppercase font-mono bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-xs text-white placeholder-slate-600 focus:border-red-500 focus:outline-none">
+          <input type="text" id="input-vin" maxlength="17" autocomplete="off" spellcheck="false" oninput="this.value = this.value.toUpperCase()" placeholder="Ej. 1FA6P8CF0H5100000 (17 dígitos)" class="w-full uppercase font-mono bg-slate-950 border border-slate-800 rounded-xl p-3.5 text-xs text-white placeholder-slate-600 focus:border-red-500 focus:outline-none">
         </div>
 
         <!-- Categorías de Servicios -->
