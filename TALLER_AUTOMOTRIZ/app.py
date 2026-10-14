@@ -155,3 +155,33 @@ def guardar_cita():
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+    @app.route('/api/actualizar-estatus', methods=['POST'])
+def actualizar_estatus():
+    try:
+        datos = request.get_json(force=True)
+        folio = datos.get('folio')
+        nuevo_estatus = datos.get('estatus')
+        
+        conn = sqlite3.connect('taller.db')
+        cursor = conn.cursor()
+        cursor.execute("UPDATE citas SET estatus = ? WHERE folio = ?", (nuevo_estatus, folio))
+        conn.commit()
+        conn.close()
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+
+@app.route('/api/eliminar-cita', methods=['POST'])
+def eliminar_cita():
+    try:
+        datos = request.get_json(force=True)
+        folio = datos.get('folio')
+        
+        conn = sqlite3.connect('taller.db')
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM citas WHERE folio = ?", (folio,))
+        conn.commit()
+        conn.close()
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 400
