@@ -122,7 +122,7 @@
       if (paramFolio) {
         document.getElementById('input-search-folio').value = paramFolio;
 
-        // CAPTURAR LOS DATOS INCRUSTADOS EN EL QR Y GUARDARLOS EN EL CELULAR AL INSTANTE
+        // Si el QR trae los datos incrustados en la URL, mostrarlos y guardarlos al instante
         const clienteUrl = urlParams.get('cliente');
         if (clienteUrl) {
           const citaUrl = {
@@ -142,11 +142,82 @@
             citasLocales.push(citaUrl);
             localStorage.setItem('citas_registradas', JSON.stringify(citasLocales));
           }
+
+          mostrarCita(citaUrl);
+          return;
         }
 
         buscarCitaPorFolio(paramFolio);
       }
     };
+
+    function mostrarCita(cita) {
+      document.getElementById('lbl-folio').innerText = cita.folio;
+      document.getElementById('lbl-cliente').innerText = cita.nombre || cita.cliente || "Cliente Registrado";
+      document.getElementById('lbl-vehiculo').innerText = cita.vehiculo;
+      document.getElementById('lbl-servicio').innerText = cita.servicio || "Servicio General";
+      document.getElementById('lbl-agenda').innerText = `${cita.fecha} ${cita.hora || ''}`.trim();
+      document.getElementById('lbl-costo').innerText = cita.costo;
+      document.getElementById('lbl-estatus').innerText = cita.estatus || 'En espera';
+
+      const boxReporte = document.getElementById('box-reporte-mecanico');
+      const gridViejas = document.getElementById('grid-client-viejas');
+      const gridNuevas = document.getElementById('grid-client-nuevas');
+      const boxViejasWrapper = document.getElementById('box-viejas-wrapper');
+      const boxNuevasWrapper = document.getElementById('box-nuevas-wrapper');
+
+      gridViejas.innerHTML = '';
+      gridNuevas.innerHTML = '';
+
+      if (db) {
+        const tx = db.transaction("reportes", "readonly");
+        const store = tx.objectStore("reportes");
+        const req = store.get(cita.folio);
+
+        req.onsuccess = function() {
+          const reporte = req.result || cita.reporte;
+
+          if (reporte) {
+            boxReporte.classList.remove('hidden');
+            document.getElementById('lbl-reporte-notas').innerText = reporte.notas || 'Servicio completado conforme al protocolo del taller.';
+
+            let listaViejas = reporte.imgViejas || (reporte.imgVieja ? [reporte.imgVieja] : []);
+            let listaNuevas = reporte.imgNuevas || (reporte.imgNueva ? [reporte.imgNueva] : []);
+
+            if (listaViejas.length > 0) {
+              boxViejasWrapper.classList.remove('hidden');
+              listaViejas.forEach(src => {
+                const img = document.createElement('img');
+                img.src = src;
+                img.className = "w-full h-28 object-cover rounded-xl border border-red-900/40 cursor-pointer hover:opacity-90 transition transform hover:scale-[1.03]";
+                img.onclick = () => abrirModalImagen(src, 'Pieza Retirada (Desgastada)');
+                gridViejas.appendChild(img);
+              });
+            } else {
+              boxViejasWrapper.classList.add('hidden');
+            }
+
+            if (listaNuevas.length > 0) {
+              boxNuevasWrapper.classList.remove('hidden');
+              listaNuevas.forEach(src => {
+                const img = document.createElement('img');
+                img.src = src;
+                img.className = "w-full h-28 object-cover rounded-xl border border-emerald-900/40 cursor-pointer hover:opacity-90 transition transform hover:scale-[1.03]";
+                img.onclick = () => abrirModalImagen(src, 'Pieza Nueva Instalada');
+                gridNuevas.appendChild(img);
+              });
+            } else {
+              boxNuevasWrapper.classList.add('hidden');
+            }
+          } else {
+            boxReporte.classList.add('hidden');
+          }
+        };
+      }
+
+      document.getElementById('resultado-rastreo').classList.remove('hidden');
+      document.getElementById('no-encontrado').classList.add('hidden');
+    }
 
     async function buscarCitaPorFolio(folioTarget = null) {
       const inputElem = document.getElementById('input-search-folio');
@@ -162,7 +233,7 @@
       const citasLocales = JSON.parse(localStorage.getItem('citas_registradas') || '[]');
       cita = citasLocales.find(c => c.folio && c.folio.trim().toUpperCase() === folio);
 
-      // 2. Si no está localmente, intentar consultar la API del servidor Flask
+      // 2. Si no está localmente, consultar la API del servidor Flask
       if (!cita) {
         try {
           const response = await fetch('/api/citas');
@@ -176,71 +247,7 @@
       }
 
       if (cita) {
-        document.getElementById('lbl-folio').innerText = cita.folio;
-        document.getElementById('lbl-cliente').innerText = cita.nombre || cita.cliente || "Cliente Registrado";
-        document.getElementById('lbl-vehiculo').innerText = cita.vehiculo;
-        document.getElementById('lbl-servicio').innerText = cita.servicio || "Servicio General";
-        document.getElementById('lbl-agenda').innerText = `${cita.fecha} ${cita.hora || ''}`.trim();
-        document.getElementById('lbl-costo').innerText = cita.costo;
-        document.getElementById('lbl-estatus').innerText = cita.estatus || 'En espera';
-
-        const boxReporte = document.getElementById('box-reporte-mecanico');
-        const gridViejas = document.getElementById('grid-client-viejas');
-        const gridNuevas = document.getElementById('grid-client-nuevas');
-        const boxViejasWrapper = document.getElementById('box-viejas-wrapper');
-        const boxNuevasWrapper = document.getElementById('box-nuevas-wrapper');
-
-        gridViejas.innerHTML = '';
-        gridNuevas.innerHTML = '';
-
-        if (db) {
-          const tx = db.transaction("reportes", "readonly");
-          const store = tx.objectStore("reportes");
-          const req = store.get(folio);
-
-          req.onsuccess = function() {
-            const reporte = req.result || cita.reporte;
-
-            if (reporte) {
-              boxReporte.classList.remove('hidden');
-              document.getElementById('lbl-reporte-notas').innerText = reporte.notas || 'Servicio completado conforme al protocolo del taller.';
-
-              let listaViejas = reporte.imgViejas || (reporte.imgVieja ? [reporte.imgVieja] : []);
-              let listaNuevas = reporte.imgNuevas || (reporte.imgNueva ? [reporte.imgNueva] : []);
-
-              if (listaViejas.length > 0) {
-                boxViejasWrapper.classList.remove('hidden');
-                listaViejas.forEach(src => {
-                  const img = document.createElement('img');
-                  img.src = src;
-                  img.className = "w-full h-28 object-cover rounded-xl border border-red-900/40 cursor-pointer hover:opacity-90 transition transform hover:scale-[1.03]";
-                  img.onclick = () => abrirModalImagen(src, 'Pieza Retirada (Desgastada)');
-                  gridViejas.appendChild(img);
-                });
-              } else {
-                boxViejasWrapper.classList.add('hidden');
-              }
-
-              if (listaNuevas.length > 0) {
-                boxNuevasWrapper.classList.remove('hidden');
-                listaNuevas.forEach(src => {
-                  const img = document.createElement('img');
-                  img.src = src;
-                  img.className = "w-full h-28 object-cover rounded-xl border border-emerald-900/40 cursor-pointer hover:opacity-90 transition transform hover:scale-[1.03]";
-                  img.onclick = () => abrirModalImagen(src, 'Pieza Nueva Instalada');
-                  gridNuevas.appendChild(img);
-                });
-              } else {
-                boxNuevasWrapper.classList.add('hidden');
-              }
-            } else {
-              boxReporte.classList.add('hidden');
-            }
-          };
-        }
-
-        resultBox.classList.remove('hidden');
-        notFoundBox.classList.add('hidden');
+        mostrarCita(cita);
       } else {
         resultBox.classList.add('hidden');
         notFoundBox.classList.remove('hidden');
