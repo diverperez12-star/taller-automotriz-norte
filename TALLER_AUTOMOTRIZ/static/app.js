@@ -520,23 +520,25 @@ function confirmarYGuardarCita() {
 
   const nombreVal = document.getElementById('input-nombre').value.trim();
   const telefonoVal = document.getElementById('input-telefono').value.trim();
+  const vehiculoVal = document.getElementById('res-vehiculo').innerText;
+  const servicioVal = obtenerNombresServiciosSeleccionados();
+  const costoVal = document.getElementById('res-costo').innerText;
 
-  // Se incluyen 'cliente' y 'hora' por separado para que el Admin los lea correctamente sin undefined
   const nuevaCita = {
     folio: currentFolio,
     cliente: nombreVal,
     nombre: nombreVal,
     telefono: telefonoVal,
-    vehiculo: document.getElementById('res-vehiculo').innerText,
+    vehiculo: vehiculoVal,
     vin: document.getElementById('input-vin').value.toUpperCase(),
-    servicio: obtenerNombresServiciosSeleccionados(),
+    servicio: servicioVal,
     fecha: fechaVal,
     hora: horaVal,
-    costo: document.getElementById('res-costo').innerText,
+    costo: costoVal,
     estatus: "En espera"
   };
 
-  // Enviar los datos al servidor Python para que se almacenen en SQLite (taller.db)
+  // Enviar los datos al servidor Python para que se almacenen en SQLite
   fetch('/api/guardar-cita', {
     method: 'POST',
     headers: {
@@ -559,8 +561,9 @@ function confirmarYGuardarCita() {
 
   document.getElementById('final-folio').innerText = currentFolio;
   
-  // QR con URL completa de seguimiento
-  const urlSeguimiento = `${window.location.origin}/seguimiento?folio=${currentFolio}`;
+  // QR con URL que transporta TODOS los datos de la cita incrustados (Inmune a reinicios de servidor)
+  const urlSeguimiento = `${window.location.origin}/seguimiento?folio=${encodeURIComponent(currentFolio)}&cliente=${encodeURIComponent(nombreVal)}&vehiculo=${encodeURIComponent(vehiculoVal)}&servicio=${encodeURIComponent(servicioVal)}&fecha=${encodeURIComponent(fechaVal)}&hora=${encodeURIComponent(horaVal)}&costo=${encodeURIComponent(costoVal)}`;
+  
   document.getElementById('qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(urlSeguimiento)}`;
 
   goToStep(5);
