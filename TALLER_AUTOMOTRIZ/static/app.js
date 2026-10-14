@@ -253,6 +253,10 @@ function validarPasoActual() {
       alert("Por favor ingresa tu Nombre Completo y Teléfono de contacto.");
       return false;
     }
+    if (tel.length < 10) {
+      alert("El teléfono debe contener exactamente 10 dígitos numéricos.");
+      return false;
+    }
   }
   if (currentStep === 2) {
     const vin = (document.getElementById('input-vin')?.value || '').trim();
@@ -480,9 +484,12 @@ function prepararResumen() {
   const fechaElegida = document.getElementById('fecha-cita')?.value;
   currentFolio = generarFolio(fechaElegida);
 
+  const nombreCliente = document.getElementById('input-nombre').value.trim();
+  const telefonoCliente = document.getElementById('input-telefono').value.trim();
+
   document.getElementById('res-folio').innerText = currentFolio;
-  document.getElementById('res-cliente').innerText = document.getElementById('input-nombre').value;
-  document.getElementById('res-telefono').innerText = document.getElementById('input-telefono').value;
+  document.getElementById('res-cliente').innerText = nombreCliente;
+  document.getElementById('res-telefono').innerText = telefonoCliente;
   
   const m = document.getElementById('select-marca').value;
   const mod = document.getElementById('select-modelo').value;
@@ -512,10 +519,13 @@ function confirmarYGuardarCita() {
   const horaVal = document.getElementById('hora-seleccionada').value;
   const fechaHoraCompleta = `${fechaVal} ${horaVal}`;
 
+  const nombreVal = document.getElementById('input-nombre').value.trim();
+  const telefonoVal = document.getElementById('input-telefono').value.trim();
+
   const nuevaCita = {
     folio: currentFolio,
-    nombre: document.getElementById('input-nombre').value,
-    telefono: document.getElementById('input-telefono').value,
+    nombre: nombreVal,
+    telefono: telefonoVal,
     vehiculo: document.getElementById('res-vehiculo').innerText,
     vin: document.getElementById('input-vin').value.toUpperCase(),
     servicio: obtenerNombresServiciosSeleccionados(),
