@@ -102,7 +102,8 @@
   <footer class="text-center py-4 text-xs text-slate-600 border-t border-slate-900">
     © 2026 Taller Automotriz del Norte - Tuxtla Gutiérrez, Chiapas.
   </footer>
-<script>
+
+  <script>
     let db;
     const request = indexedDB.open("TAN_FotosDB", 1);
 
@@ -121,7 +122,7 @@
       if (paramFolio) {
         document.getElementById('input-search-folio').value = paramFolio;
 
-        // Si el QR trae los datos incrustados, guardarlos de inmediato en el celular
+        // CAPTURAR LOS DATOS INCRUSTADOS EN EL QR Y GUARDARLOS EN EL CELULAR AL INSTANTE
         const clienteUrl = urlParams.get('cliente');
         if (clienteUrl) {
           const citaUrl = {
@@ -157,11 +158,11 @@
 
       let cita = null;
 
-      // 1. Buscar en localStorage del dispositivo (donde ya quedó guardado por el QR o por registro)
+      // 1. Buscar en localStorage del dispositivo
       const citasLocales = JSON.parse(localStorage.getItem('citas_registradas') || '[]');
       cita = citasLocales.find(c => c.folio && c.folio.trim().toUpperCase() === folio);
 
-      // 2. Si no está localmente, intentar consultar la API del servidor
+      // 2. Si no está localmente, intentar consultar la API del servidor Flask
       if (!cita) {
         try {
           const response = await fetch('/api/citas');
@@ -199,10 +200,11 @@
 
           req.onsuccess = function() {
             const reporte = req.result || cita.reporte;
+
             if (reporte) {
               boxReporte.classList.remove('hidden');
-              document.getElementById('lbl-reporte-notas').innerText = reporte.notas || 'Servicio completado.';
-              
+              document.getElementById('lbl-reporte-notas').innerText = reporte.notas || 'Servicio completado conforme al protocolo del taller.';
+
               let listaViejas = reporte.imgViejas || (reporte.imgVieja ? [reporte.imgVieja] : []);
               let listaNuevas = reporte.imgNuevas || (reporte.imgNueva ? [reporte.imgNueva] : []);
 
@@ -211,7 +213,7 @@
                 listaViejas.forEach(src => {
                   const img = document.createElement('img');
                   img.src = src;
-                  img.className = "w-full h-28 object-cover rounded-xl border border-red-900/40 cursor-pointer";
+                  img.className = "w-full h-28 object-cover rounded-xl border border-red-900/40 cursor-pointer hover:opacity-90 transition transform hover:scale-[1.03]";
                   img.onclick = () => abrirModalImagen(src, 'Pieza Retirada (Desgastada)');
                   gridViejas.appendChild(img);
                 });
@@ -224,7 +226,7 @@
                 listaNuevas.forEach(src => {
                   const img = document.createElement('img');
                   img.src = src;
-                  img.className = "w-full h-28 object-cover rounded-xl border border-emerald-900/40 cursor-pointer";
+                  img.className = "w-full h-28 object-cover rounded-xl border border-emerald-900/40 cursor-pointer hover:opacity-90 transition transform hover:scale-[1.03]";
                   img.onclick = () => abrirModalImagen(src, 'Pieza Nueva Instalada');
                   gridNuevas.appendChild(img);
                 });
@@ -255,6 +257,5 @@
       document.getElementById('modal-imagen').classList.add('hidden');
     }
   </script>
-  
 </body>
 </html>
