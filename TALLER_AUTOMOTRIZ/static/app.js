@@ -538,36 +538,61 @@ async function confirmarYGuardarCita() {
     estatus: "En espera"
   };
 
-  try {
-    // 1. OBLIGAR al sistema a esperar que el servidor de Render guarde la cita en SQLite
-    const response = await fetch('/api/guardar-cita', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(nuevaCita)
-    });
-
-    const data = await response.json();
-    if (!response.ok || !data.success) {
-      throw new Error("El servidor rechazó el guardado");
-    }
-    console.log("Cita guardada en SQLite con éxito:", data);
-
-  } catch (err) {
-    console.error("Error crítico al guardar en el servidor:", err);
-    alert("Hubo un problema al conectar con el servidor central. Por favor verifica tu conexión e inténtalo de nuevo.");
-    return; // Detiene el avance si falló la base de datos central
+  // Referencia al botón de confirmación para mostrar indicador visual si Render está despertando
+  const botonConfirmar = document.querySelector('button[onclick*="confirmarYGuardarCita"]') || event?.target;
+  if (botonConfirmar) {
+    botonConfirmar.disabled = true;
+    botonConfirmar.innerText = "CONECTANDO CON EL SERVIDOR...";
   }
 
-  // 2. Respaldo local secundario en navegador
+  let guardadoExitoso = false;
+  let intentos = 3; // Reintentar hasta 3 veces por si el servidor de Render está dormido
+
+  while (intentos > 0 && !guardadoExitoso) {
+    try {
+      const response = await fetch('/api/guardar-cita', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(nuevaCita)
+      });
+
+      const data = await response.json();
+      if (response.ok && data.success) {
+        guardadoExitoso = true;
+        console.log("Cita guardada en SQLite con éxito:", data);
+      }
+    } catch (err) {
+      console.warn(`Intento fallido (${intentos} restantes), el servidor de Render puede estar despertando...`, err);
+    }
+
+    intentos--;
+    if (!guardadoExitoso && intentos > 0) {
+      // Esperar 2 segundos antes de reintentar para darle tiempo a Render de arrancar
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+  }
+
+  // Restaurar el botón
+  if (botonConfirmar) {
+    botonConfirmar.disabled = false;
+    botonConfirmar.innerText = "CONFIRMAR Y AGENDAR CITA ✓";
+  }
+
+  if (!guardadoExitoso) {
+    alert("El servidor en la nube tardó en responder (Render estaba suspendido). Por favor, inténtalo de nuevo.");
+    return;
+  }
+
+  // Respaldo local secundario en navegador
   const citas = JSON.parse(localStorage.getItem('citas_registradas') || '[]');
   citas.push(nuevaCita);
   localStorage.setItem('citas_registradas', JSON.stringify(citas));
 
   document.getElementById('final-folio').innerText = currentFolio;
 
-  // 3. Todo OK, avanzar a la pantalla de éxito
+  // Avanzar a la pantalla de éxito
   goToStep(5);
 }
 
