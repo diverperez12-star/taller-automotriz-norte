@@ -76,9 +76,29 @@ def api_citas():
     citas_list = []
     for row in rows:
         d = dict(row)
-        d['cliente'] = d.get('cliente') or d.get('nombre') or 'Sin nombre'
-        d['nombre'] = d['cliente']
-        d['hora'] = d.get('hora') or ''
+        # Mapeo exacto para que Power BI reconozca las columnas sin arrojar null
+        cliente_val = d.get('cliente') or d.get('nombre') or 'Sin nombre'
+        
+        d['cliente'] = cliente_val
+        d['nombre'] = cliente_val
+        d['folio'] = d.get('folio') or ''
+        d['telefono'] = d.get('telefono') or ''
+        d['vehiculo'] = d.get('vehiculo') or ''
+        d['vin'] = d.get('vin') or ''
+        
+        # Mapeos especiales para Power Query
+        d['costo_estimado'] = d.get('costo') or '$0 MXN'
+        d['estado'] = d.get('estatus') or 'En espera'
+        d['fecha_cita'] = d.get('fecha') or ''
+        d['hora_cita'] = d.get('hora') or ''
+        d['fecha_registro'] = d.get('fecha') or '' # Valor por defecto si no existe
+        d['marca'] = '' # Rellenar si tu tabla separa marcas
+        d['modelo'] = ''
+        d['anio'] = 2026
+        d['tipo_servicio'] = d.get('servicio') or ''
+        d['modalidad_reporte'] = ''
+        d['tipo_uso'] = ''
+        
         citas_list.append(d)
         
     return jsonify(citas_list)
