@@ -31,7 +31,7 @@
       </div>
 
       <div class="flex gap-3">
-        <input type="text" id="input-search-folio" placeholder="INGRESA TU FOLIO (EJ. TAN-20261016-0TJI)" onkeyup="if(event.key==='Enter') buscarCitaPorFolio()" class="flex-1 bg-slate-950 border border-slate-800 rounded-2xl p-4 text-xs font-mono text-white placeholder-slate-600 focus:border-red-500 focus:outline-none uppercase tracking-widest">
+        <input type="text" id="input-search-folio" placeholder="INGRESA TU FOLIO (EJ. TAN-20261015-MU03)" onkeyup="if(event.key==='Enter') buscarCitaPorFolio()" class="flex-1 bg-slate-950 border border-slate-800 rounded-2xl p-4 text-xs font-mono text-white placeholder-slate-600 focus:border-red-500 focus:outline-none uppercase tracking-widest">
         <button onclick="buscarCitaPorFolio()" class="px-8 py-4 bg-red-600 hover:bg-red-500 text-white font-black text-xs uppercase rounded-2xl transition shadow-lg shadow-red-600/30">BUSCAR</button>
       </div>
 
@@ -134,21 +134,21 @@
 
       let cita = null;
 
-      // 1. Intentar buscar primero en el servidor Flask (Render / SQLite)
-      try {
-        const response = await fetch('/api/citas');
-        if (response.ok) {
-          const citasServidor = await response.json();
-          cita = citasServidor.find(c => c.folio && c.folio.trim().toUpperCase() === folio);
-        }
-      } catch (err) {
-        console.warn("No se pudo conectar con el servidor, buscando en memoria local...", err);
-      }
+      // 1. Buscar primero en localStorage
+      const citasLocales = JSON.parse(localStorage.getItem('citas_registradas') || '[]');
+      cita = citasLocales.find(c => c.folio && c.folio.trim().toUpperCase() === folio);
 
-      // 2. Si no se encuentra en el servidor, buscar en LocalStorage como respaldo
+      // 2. Si no está localmente, consultar la API del servidor Flask
       if (!cita) {
-        const citasLocales = JSON.parse(localStorage.getItem('citas_registradas') || '[]');
-        cita = citasLocales.find(c => c.folio && c.folio.trim().toUpperCase() === folio);
+        try {
+          const response = await fetch('/api/citas');
+          if (response.ok) {
+            const citasServidor = await response.json();
+            cita = citasServidor.find(c => c.folio && c.folio.trim().toUpperCase() === folio);
+          }
+        } catch (err) {
+          console.warn("No se pudo conectar con el servidor", err);
+        }
       }
 
       if (cita) {
@@ -169,7 +169,6 @@
         gridViejas.innerHTML = '';
         gridNuevas.innerHTML = '';
 
-        // Buscar reporte en IndexedDB
         if (db) {
           const tx = db.transaction("reportes", "readonly");
           const store = tx.objectStore("reportes");
