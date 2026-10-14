@@ -514,7 +514,7 @@ function obtenerNombresServiciosSeleccionados() {
   return nombres.length > 0 ? nombres.join(', ') : currentCategory.toUpperCase();
 }
 
-function confirmarYGuardarCita() {
+async function confirmarYGuardarCita() {
   const fechaVal = document.getElementById('fecha-cita').value;
   const horaVal = document.getElementById('hora-seleccionada').value;
 
@@ -538,29 +538,36 @@ function confirmarYGuardarCita() {
     estatus: "En espera"
   };
 
-  // Enviar los datos al servidor Python para que se almacenen en SQLite
-  fetch('/api/guardar-cita', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(nuevaCita)
-  })
-  .then(res => res.json())
-  .then(data => {
-    console.log("Cita guardada en SQLite con éxito:", data);
-  })
-  .catch(err => {
-    console.error("Error al guardar en el servidor:", err);
-  });
+  try {
+    // 1. OBLIGAR al sistema a esperar que el servidor de Render guarde la cita en SQLite
+    const response = await fetch('/api/guardar-cita', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(nuevaCita)
+    });
 
-  // Respaldo local en navegador
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+      throw new Error("El servidor rechazó el guardado");
+    }
+    console.log("Cita guardada en SQLite con éxito:", data);
+
+  } catch (err) {
+    console.error("Error crítico al guardar en el servidor:", err);
+    alert("Hubo un problema al conectar con el servidor central. Por favor verifica tu conexión e inténtalo de nuevo.");
+    return; // Detiene el avance si falló la base de datos central
+  }
+
+  // 2. Respaldo local secundario en navegador
   const citas = JSON.parse(localStorage.getItem('citas_registradas') || '[]');
   citas.push(nuevaCita);
   localStorage.setItem('citas_registradas', JSON.stringify(citas));
 
   document.getElementById('final-folio').innerText = currentFolio;
 
+  // 3. Todo OK, avanzar a la pantalla de éxito
   goToStep(5);
 }
 
