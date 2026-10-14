@@ -70,7 +70,10 @@ def api_citas():
 @app.route('/api/guardar-cita', methods=['POST'])
 def guardar_cita():
     try:
-        datos = request.json
+        datos = request.get_json(force=True)
+        if not datos:
+            return jsonify({"success": False, "error": "No se recibieron datos JSON"}), 400
+
         nombre_val = datos.get('nombre') or datos.get('cliente') or 'Sin nombre'
         
         conn = sqlite3.connect('taller.db')
