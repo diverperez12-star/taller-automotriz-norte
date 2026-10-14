@@ -10,7 +10,7 @@ def init_db():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS citas (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            folio TEXT,
+            folio TEXT UNIQUE,
             cliente TEXT,
             nombre TEXT,
             telefono TEXT,
@@ -23,30 +23,10 @@ def init_db():
             estatus TEXT DEFAULT 'En espera'
         )
     ''')
-    
-    columnas_necesarias = [
-        ('cliente', 'TEXT'),
-        ('nombre', 'TEXT'),
-        ('telefono', 'TEXT'),
-        ('vehiculo', 'TEXT'),
-        ('vin', 'TEXT'),
-        ('servicio', 'TEXT'),
-        ('fecha', 'TEXT'),
-        ('hora', 'TEXT'),
-        ('costo', 'TEXT'),
-        ('estatus', 'TEXT')
-    ]
-    
-    for col, col_type in columnas_necesarias:
-        try:
-            cursor.execute(f"ALTER TABLE citas ADD COLUMN {col} {col_type}")
-        except sqlite3.OperationalError:
-            pass
-
     conn.commit()
     conn.close()
 
-# MANDAR A LLAMAR LA INICIALIZACIÓN DE LA BASE DE DATOS
+# Inicialización de la base de datos al arrancar
 init_db()
 
 @app.route('/')
@@ -79,9 +59,12 @@ def api_citas():
         cliente_val = d.get('cliente') or d.get('nombre') or 'Sin nombre'
         vehiculo_val = d.get('vehiculo') or ''
         
+        # Mapeo inteligente para Power BI
         marca_extraida = "General"
         modelo_extraido = vehiculo_val
-        for marca_posible in ["Mazda", "Nissan", "Chevrolet", "Volkswagen", "Toyota", "Ford", "Honda", "Hyundai", "Kia", "Renault", "Suzuki", "SEAT", "Peugeot", "Jeep", "RAM"]:
+        marcas_conocidas = ["Mazda", "Nissan", "Chevrolet", "Volkswagen", "Toyota", "Ford", "Honda", "Hyundai", "Kia", "Renault", "Suzuki", "SEAT", "Peugeot", "Jeep", "RAM"]
+        
+        for marca_posible in marcas_conocidas:
             if marca_posible.lower() in vehiculo_val.lower():
                 marca_extraida = marca_posible
                 break
@@ -117,6 +100,7 @@ def guardar_cita():
         if not datos:
             return jsonify({"success": False, "error": "No se recibieron datos JSON"}), 400
 
+        # Validación en backend: El taller no labora los domingos (weekday 6)
         fecha_str = datos.get('fecha')
         if fecha_str:
             fecha_obj = datetime.strptime(fecha_str, '%Y-%m-%d')
@@ -157,6 +141,9 @@ def actualizar_estatus():
         folio = datos.get('folio')
         nuevo_estatus = datos.get('estatus')
         
+        if not folio or not nuevo_estatus:
+            return jsonify({"success": False, "error": "Folio o estatus no proporcionados"}), 400
+        
         conn = sqlite3.connect('taller.db')
         cursor = conn.cursor()
         cursor.execute("UPDATE citas SET estatus = ? WHERE folio = ?", (nuevo_estatus, folio))
@@ -171,6 +158,9 @@ def eliminar_cita():
     try:
         datos = request.get_json(force=True)
         folio = datos.get('folio')
+        
+        if not folio:
+            return jsonify({"success": False, "error": "Folio no proporcionado"}), 400
         
         conn = sqlite3.connect('taller.db')
         cursor = conn.cursor()
