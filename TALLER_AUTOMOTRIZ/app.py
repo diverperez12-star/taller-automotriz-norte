@@ -6,6 +6,7 @@ app = Flask(__name__, template_folder='TEMPLATES', static_folder='static')
 def init_db():
     conn = sqlite3.connect('taller.db')
     cursor = conn.cursor()
+    # Se añade la columna 'hora' a la estructura de la tabla
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS citas (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -16,6 +17,7 @@ def init_db():
             vin TEXT,
             servicio TEXT,
             fecha TEXT,
+            hora TEXT,
             costo TEXT,
             estatus TEXT DEFAULT 'En espera'
         )
@@ -52,9 +54,10 @@ def api_citas():
     citas_list = []
     for row in rows:
         d = dict(row)
-        # Asegurar compatibilidad total de claves para evitar undefined
+        # Normalizar claves para evitar cualquier 'undefined'
         d['cliente'] = d.get('nombre') or d.get('cliente') or 'Sin nombre'
         d['nombre'] = d['cliente']
+        d['hora'] = d.get('hora') or ''
         citas_list.append(d)
         
     return jsonify(citas_list)
@@ -68,8 +71,8 @@ def guardar_cita():
         conn = sqlite3.connect('taller.db')
         cursor = conn.cursor()
         cursor.execute('''
-            INSERT INTO citas (folio, nombre, telefono, vehiculo, vin, servicio, fecha, costo, estatus)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO citas (folio, nombre, telefono, vehiculo, vin, servicio, fecha, hora, costo, estatus)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             datos.get('folio'),
             nombre_val,
@@ -78,6 +81,7 @@ def guardar_cita():
             datos.get('vin'),
             datos.get('servicio'),
             datos.get('fecha'),
+            datos.get('hora'),
             datos.get('costo'),
             datos.get('estatus', 'En espera')
         ))
