@@ -23,7 +23,6 @@ def init_db():
     conn.commit()
     conn.close()
 
-# Inicializar la tabla al arrancar el servidor
 init_db()
 
 @app.route('/')
@@ -41,7 +40,6 @@ def seguimiento():
 def admin():
     return render_template('admin.html')
 
-# Ruta para que Power BI y el Admin lean las citas
 @app.route('/api/citas', methods=['GET'])
 def api_citas():
     conn = sqlite3.connect('taller.db')
@@ -50,14 +48,23 @@ def api_citas():
     cursor.execute("SELECT * FROM citas")
     rows = cursor.fetchall()
     conn.close()
-    citas_list = [dict(row) for row in rows]
+    
+    citas_list = []
+    for row in rows:
+        d = dict(row)
+        # Asegurar compatibilidad total de claves para evitar undefined
+        d['cliente'] = d.get('nombre') or d.get('cliente') or 'Sin nombre'
+        d['nombre'] = d['cliente']
+        citas_list.append(d)
+        
     return jsonify(citas_list)
 
-# Ruta NUEVA para recibir y guardar citas desde el formulario web
 @app.route('/api/guardar-cita', methods=['POST'])
 def guardar_cita():
     try:
         datos = request.json
+        nombre_val = datos.get('nombre') or datos.get('cliente') or 'Sin nombre'
+        
         conn = sqlite3.connect('taller.db')
         cursor = conn.cursor()
         cursor.execute('''
@@ -65,18 +72,18 @@ def guardar_cita():
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             datos.get('folio'),
-            datos.get('nombre'),
+            nombre_val,
             datos.get('telefono'),
             datos.get('vehiculo'),
             datos.get('vin'),
             datos.get('servicio'),
             datos.get('fecha'),
             datos.get('costo'),
-            'En espera'
+            datos.get('estatus', 'En espera')
         ))
         conn.commit()
         conn.close()
-        return jsonify({"success": True, "message": "Cita guardada correctamente"})
+        return jsonify({"success": True})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 400
 
