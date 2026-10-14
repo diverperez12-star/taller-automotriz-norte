@@ -22,16 +22,28 @@ def init_db():
             estatus TEXT DEFAULT 'En espera'
         )
     ''')
-    # Migración automática si la tabla ya existía sin estas columnas
-    for col, col_type in [('cliente', 'TEXT'), ('nombre', 'TEXT'), ('hora', 'TEXT')]:
+    
+    columnas_necesarias = [
+        ('cliente', 'TEXT'),
+        ('nombre', 'TEXT'),
+        ('telefono', 'TEXT'),
+        ('vehiculo', 'TEXT'),
+        ('vin', 'TEXT'),
+        ('servicio', 'TEXT'),
+        ('fecha', 'TEXT'),
+        ('hora', 'TEXT'),
+        ('costo', 'TEXT'),
+        ('estatus', 'TEXT')
+    ]
+    
+    for col, col_type in columnas_necesarias:
         try:
             cursor.execute(f"ALTER TABLE citas ADD COLUMN {col} {col_type}")
         except sqlite3.OperationalError:
             pass
+
     conn.commit()
     conn.close()
-
-init_db()
 
 @app.route('/')
 @app.route('/index.html')
