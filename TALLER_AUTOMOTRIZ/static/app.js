@@ -560,13 +560,30 @@ function confirmarYGuardarCita() {
   localStorage.setItem('citas_registradas', JSON.stringify(citas));
 
   document.getElementById('final-folio').innerText = currentFolio;
-  
-  // QR con URL que transporta TODOS los datos de la cita incrustados (Inmune a reinicios de servidor)
-  const urlSeguimiento = `${window.location.origin}/seguimiento?folio=${encodeURIComponent(currentFolio)}&cliente=${encodeURIComponent(nombreVal)}&vehiculo=${encodeURIComponent(vehiculoVal)}&servicio=${encodeURIComponent(servicioVal)}&fecha=${encodeURIComponent(fechaVal)}&hora=${encodeURIComponent(horaVal)}&costo=${encodeURIComponent(costoVal)}`;
-  
-  document.getElementById('qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(urlSeguimiento)}`;
 
   goToStep(5);
+}
+
+function obtenerEnlaceSeguimiento() {
+  return `${window.location.origin}/seguimiento?folio=${currentFolio}`;
+}
+
+function copiarEnlaceSeguimiento() {
+  const enlace = obtenerEnlaceSeguimiento();
+  navigator.clipboard.writeText(enlace).then(() => {
+    alert("¡Enlace copiado al portapapeles!");
+  }).catch(err => {
+    console.error("Error al copiar:", err);
+  });
+}
+
+function enviarPorWhatsApp() {
+  const telefonoCliente = document.getElementById('input-telefono').value.trim();
+  const enlace = obtenerEnlaceSeguimiento();
+  const mensaje = `Hola ${document.getElementById('input-nombre').value.trim()}, tu cita en Taller Automotriz del Norte ha sido registrada con el folio *${currentFolio}*. Puedes dar seguimiento en tiempo real aquí: ${enlace}`;
+  
+  const urlWhatsApp = `https://api.whatsapp.com/send?phone=52${telefonoCliente}&text=${encodeURIComponent(mensaje)}`;
+  window.open(urlWhatsApp, '_blank');
 }
 
 function irARastrear() {
