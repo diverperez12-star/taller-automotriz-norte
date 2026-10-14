@@ -45,6 +45,9 @@ def init_db():
     conn.commit()
     conn.close()
 
+# MANDAR A LLAMAR LA INICIALIZACIÓN DE LA BASE DE DATOS
+init_db()
+
 @app.route('/')
 @app.route('/index.html')
 def index():
