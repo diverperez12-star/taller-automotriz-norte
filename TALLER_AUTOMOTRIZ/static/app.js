@@ -508,20 +508,39 @@ function obtenerNombresServiciosSeleccionados() {
 }
 
 function confirmarYGuardarCita() {
+  const fechaVal = document.getElementById('fecha-cita').value;
+  const horaVal = document.getElementById('hora-seleccionada').value;
+  const fechaHoraCompleta = `${fechaVal} ${horaVal}`;
+
   const nuevaCita = {
     folio: currentFolio,
-    cliente: document.getElementById('input-nombre').value,
+    nombre: document.getElementById('input-nombre').value,
     telefono: document.getElementById('input-telefono').value,
     vehiculo: document.getElementById('res-vehiculo').innerText,
     vin: document.getElementById('input-vin').value.toUpperCase(),
-    servicio: currentCategory.toUpperCase(),
-    serviciosDetalle: obtenerNombresServiciosSeleccionados(),
-    fecha: document.getElementById('fecha-cita').value,
-    hora: document.getElementById('hora-seleccionada').value,
+    servicio: obtenerNombresServiciosSeleccionados(),
+    fecha: fechaHoraCompleta,
     costo: document.getElementById('res-costo').innerText,
-    estatus: "Confirmada / En Espera"
+    estatus: "En espera"
   };
 
+  // Enviar los datos al servidor Python para que se almacenen en SQLite (taller.db)
+  fetch('/api/guardar-cita', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(nuevaCita)
+  })
+  .then(res => res.json())
+  .then(data => {
+    console.log("Cita guardada en SQLite con éxito:", data);
+  })
+  .catch(err => {
+    console.error("Error al guardar en el servidor:", err);
+  });
+
+  // Respaldo local en navegador
   const citas = JSON.parse(localStorage.getItem('citas_registradas') || '[]');
   citas.push(nuevaCita);
   localStorage.setItem('citas_registradas', JSON.stringify(citas));
