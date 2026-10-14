@@ -102,8 +102,7 @@
   <footer class="text-center py-4 text-xs text-slate-600 border-t border-slate-900">
     © 2026 Taller Automotriz del Norte - Tuxtla Gutiérrez, Chiapas.
   </footer>
-
-  <script>
+<script>
     let db;
     const request = indexedDB.open("TAN_FotosDB", 1);
 
@@ -118,8 +117,32 @@
       db = e.target.result;
       const urlParams = new URLSearchParams(window.location.search);
       const paramFolio = urlParams.get('folio') || urlParams.get('id');
+      
       if (paramFolio) {
         document.getElementById('input-search-folio').value = paramFolio;
+
+        // Si el QR trae los datos incrustados, guardarlos de inmediato en el celular
+        const clienteUrl = urlParams.get('cliente');
+        if (clienteUrl) {
+          const citaUrl = {
+            folio: paramFolio,
+            cliente: clienteUrl,
+            nombre: clienteUrl,
+            vehiculo: urlParams.get('vehiculo') || 'Vehículo Registrado',
+            servicio: urlParams.get('servicio') || 'Servicio General',
+            fecha: urlParams.get('fecha') || '',
+            hora: urlParams.get('hora') || '',
+            costo: urlParams.get('costo') || '$0 MXN',
+            estatus: 'En espera'
+          };
+
+          const citasLocales = JSON.parse(localStorage.getItem('citas_registradas') || '[]');
+          if (!citasLocales.some(c => c.folio === paramFolio)) {
+            citasLocales.push(citaUrl);
+            localStorage.setItem('citas_registradas', JSON.stringify(citasLocales));
+          }
+        }
+
         buscarCitaPorFolio(paramFolio);
       }
     };
@@ -134,11 +157,11 @@
 
       let cita = null;
 
-      // 1. Buscar primero en localStorage
+      // 1. Buscar en localStorage del dispositivo (donde ya quedó guardado por el QR o por registro)
       const citasLocales = JSON.parse(localStorage.getItem('citas_registradas') || '[]');
       cita = citasLocales.find(c => c.folio && c.folio.trim().toUpperCase() === folio);
 
-      // 2. Si no está localmente, consultar la API del servidor Flask
+      // 2. Si no está localmente, intentar consultar la API del servidor
       if (!cita) {
         try {
           const response = await fetch('/api/citas');
@@ -155,8 +178,8 @@
         document.getElementById('lbl-folio').innerText = cita.folio;
         document.getElementById('lbl-cliente').innerText = cita.nombre || cita.cliente || "Cliente Registrado";
         document.getElementById('lbl-vehiculo').innerText = cita.vehiculo;
-        document.getElementById('lbl-servicio').innerText = cita.servicio || cita.servicioDetalle || "Servicio General";
-        document.getElementById('lbl-agenda').innerText = cita.fecha;
+        document.getElementById('lbl-servicio').innerText = cita.servicio || "Servicio General";
+        document.getElementById('lbl-agenda').innerText = `${cita.fecha} ${cita.hora || ''}`.trim();
         document.getElementById('lbl-costo').innerText = cita.costo;
         document.getElementById('lbl-estatus').innerText = cita.estatus || 'En espera';
 
@@ -176,11 +199,10 @@
 
           req.onsuccess = function() {
             const reporte = req.result || cita.reporte;
-
             if (reporte) {
               boxReporte.classList.remove('hidden');
-              document.getElementById('lbl-reporte-notas').innerText = reporte.notas || 'Servicio completado conforme al protocolo del taller.';
-
+              document.getElementById('lbl-reporte-notas').innerText = reporte.notas || 'Servicio completado.';
+              
               let listaViejas = reporte.imgViejas || (reporte.imgVieja ? [reporte.imgVieja] : []);
               let listaNuevas = reporte.imgNuevas || (reporte.imgNueva ? [reporte.imgNueva] : []);
 
@@ -189,7 +211,7 @@
                 listaViejas.forEach(src => {
                   const img = document.createElement('img');
                   img.src = src;
-                  img.className = "w-full h-28 object-cover rounded-xl border border-red-900/40 cursor-pointer hover:opacity-90 transition transform hover:scale-[1.03]";
+                  img.className = "w-full h-28 object-cover rounded-xl border border-red-900/40 cursor-pointer";
                   img.onclick = () => abrirModalImagen(src, 'Pieza Retirada (Desgastada)');
                   gridViejas.appendChild(img);
                 });
@@ -202,7 +224,7 @@
                 listaNuevas.forEach(src => {
                   const img = document.createElement('img');
                   img.src = src;
-                  img.className = "w-full h-28 object-cover rounded-xl border border-emerald-900/40 cursor-pointer hover:opacity-90 transition transform hover:scale-[1.03]";
+                  img.className = "w-full h-28 object-cover rounded-xl border border-emerald-900/40 cursor-pointer";
                   img.onclick = () => abrirModalImagen(src, 'Pieza Nueva Instalada');
                   gridNuevas.appendChild(img);
                 });
@@ -233,5 +255,6 @@
       document.getElementById('modal-imagen').classList.add('hidden');
     }
   </script>
+  
 </body>
 </html>
