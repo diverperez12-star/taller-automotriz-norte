@@ -611,15 +611,32 @@ function irARastrear() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  // 1. Bloqueo estricto del VIN a 17 caracteres y mayúsculas automáticas (PC y Móvil)
+  const inputVin = document.getElementById('input-vin');
+  if (inputVin) {
+    inputVin.setAttribute('maxlength', '17');
+    inputVin.addEventListener('input', (e) => {
+      e.target.value = e.target.value.toUpperCase().slice(0, 17);
+    });
+  }
+
   if (document.getElementById('select-marca')) {
     onMarcaChange();
     actualizarBarraPasos();
 
+    // 2. Calendario optimizado para móviles (touchUi) y bloqueo de domingos
     if (typeof flatpickr !== "undefined") {
       flatpickr("#fecha-cita", {
         locale: "es",
         minDate: "today",
         dateFormat: "Y-m-d",
+        touchUi: true, // Soluciona la apertura táctil en dispositivos móviles
+        disable: [
+          function(date) {
+            // Deshabilita los domingos (0 = Domingo)
+            return (date.getDay() === 0);
+          }
+        ],
         onChange: function(selectedDates, dateStr) {
           cargarHorariosDisponibles(dateStr);
         }
