@@ -400,7 +400,7 @@ function renderServices() {
           <p class="text-[10px] text-slate-400 mt-0.5">${s.horas}</p>
         </div>
       </div>
-      <span class="text-xs font-mono font-bold text-red-400 ml-2">${precio === 0 ? 'GRATIS' : '$' + precio.toLocaleString() + ' MXN'}</span>
+      <span class="text-xs font-mono font-bold text-red-400 ml-2">${precio === 0 ? 'GRATIS' : '$' + precio.toLocaleString()}</span>
     `;
     container.appendChild(div);
   });
@@ -500,7 +500,7 @@ function prepararResumen() {
   document.getElementById('res-vin').innerText = document.getElementById('input-vin').value;
   document.getElementById('res-tipo').innerText = currentCategory.toUpperCase();
   document.getElementById('res-agenda').innerText = `${fechaElegida} a las ${document.getElementById('hora-seleccionada').value}`;
-  document.getElementById('res-costo').innerText = `$${calcularTotal().toLocaleString('es-MX')} MXN`;
+  document.getElementById('res-costo').innerText = `$${calcularTotal().toLocaleString('es-MX')}`;
 }
 
 function obtenerNombresServiciosSeleccionados() {
