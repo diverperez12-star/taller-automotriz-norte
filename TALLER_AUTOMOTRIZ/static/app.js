@@ -214,7 +214,7 @@ const serviciosBase = {
     { id: "c4", nombre: "Diagnóstico Sistema Eléctrico", horas: "2.0 horas", base: 1260 }
   ],
   diagnostico: [
-    { id: "d1", nombre: "Inspección General 25 Puntos + Escaneo", horas: "1.0 hora", base: 0 }
+    { id: "d1", nombre: "Inspección General 25 Puntos + Escaneo", horas: "1.0 hora", base: 200 }
   ]
 };
 
@@ -273,7 +273,7 @@ function validarPasoActual() {
     const fecha = document.getElementById('fecha-cita')?.value;
     const hora = document.getElementById('hora-seleccionada')?.value;
     if (!fecha || !hora) {
-      alert("Selecciona la fecha y el horario de recepción (09:00 - 17:00).");
+      alert("Selecciona la fecha y el horario de recepción.");
       return false;
     }
   }
@@ -400,7 +400,7 @@ function renderServices() {
           <p class="text-[10px] text-slate-400 mt-0.5">${s.horas}</p>
         </div>
       </div>
-      <span class="text-xs font-mono font-bold text-red-400 ml-2">${precio === 0 ? 'GRATIS' : '$' + precio.toLocaleString()}</span>
+      <span class="text-xs font-mono font-bold text-red-400 ml-2">${'$' + precio.toLocaleString()}</span>
     `;
     container.appendChild(div);
   });
@@ -433,9 +433,9 @@ function cargarHorariosDisponibles(fecha) {
 
   contenedor.innerHTML = '';
 
+  // Horarios reducidos y establecidos a las 9, 11, 13, 15 y 17 horas
   const bloques = [
-    "09:00", "11:00", "13:00", "15:00",
-    "17:00"
+    "09:00", "11:00", "13:00", "15:00", "17:00"
   ];
 
   const citas = JSON.parse(localStorage.getItem('citas_registradas') || '[]');
