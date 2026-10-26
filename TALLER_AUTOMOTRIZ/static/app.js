@@ -427,55 +427,66 @@ function calcularTotal() {
   return total;
 }
 
-function cargarHorariosDisponibles(fecha) {
-  const contenedor = document.getElementById('contenedor-horarios');
-  if (!contenedor) return;
+async function cargarHorariosDisponibles(fecha) {
+    const contenedor = document.getElementById('contenedor-horarios');
+    if (!contenedor) return;
 
-  contenedor.innerHTML = '';
+    contenedor.innerHTML = '<p class="text-xs text-slate-400">Verificando disponibilidad...</p>';
 
-  // Horarios reducidos y establecidos a las 9, 11, 13, 15 y 17 horas
-  const bloques = [
-    "09:00", "11:00", "13:00", "15:00", "17:00"
-  ];
+    const bloques = [
+        "09:00", "11:00", "13:00", "15:00", "17:00"
+    ];
 
-  const citas = JSON.parse(localStorage.getItem('citas_registradas') || '[]');
-  const bloqueos = JSON.parse(localStorage.getItem('bloqueos_admin') || '{}')[fecha] || [];
+    let ocupados = [];
 
-  const ocupados = citas
-    .filter(c => c.fecha === fecha && c.estatus !== 'Cancelada')
-    .map(c => c.hora);
-
-  const horaSeleccionadaActual = document.getElementById('hora-seleccionada')?.value;
-
-  bloques.forEach(hora => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.textContent = hora;
-
-    const estaOcupado = ocupados.includes(hora) || bloqueos.includes(hora);
-
-    if (estaOcupado) {
-      btn.className = "p-2 bg-slate-900/90 text-slate-600 rounded-lg text-xs cursor-not-allowed line-through border border-slate-900 font-bold opacity-60";
-      btn.disabled = true;
-      btn.title = "Horario no disponible o ya reservado";
-    } else {
-      if (hora === horaSeleccionadaActual) {
-        btn.className = "p-2 bg-red-600 text-white rounded-lg text-xs transition border border-red-500 btn-slot font-bold shadow-lg shadow-red-600/30 scale-105";
-      } else {
-        btn.className = "p-2 bg-slate-900 hover:bg-red-600/80 text-slate-300 hover:text-white rounded-lg text-xs transition border border-slate-800 btn-slot font-semibold";
-      }
-
-      btn.onclick = () => {
-        document.querySelectorAll('.btn-slot').forEach(b => {
-          b.className = "p-2 bg-slate-900 hover:bg-red-600/80 text-slate-300 hover:text-white rounded-lg text-xs transition border border-slate-800 btn-slot font-semibold";
-        });
-        
-        btn.className = "p-2 bg-red-600 text-white rounded-lg text-xs transition border border-red-500 btn-slot font-bold shadow-lg shadow-red-600/30 scale-105";
-        document.getElementById('hora-seleccionada').value = hora;
-      };
+    try {
+        // Consultar directamente las citas reales desde el servidor (SQLite)
+        const response = await fetch('/api/citas');
+        if (response.ok) {
+            const citasServidor = await response.json();
+            ocupados = citasServidor
+                .filter(c => c.fecha === fecha && c.estatus !== 'Cancelada')
+                .map(c => c.hora);
+        }
+    } catch (err) {
+        console.error("Error al obtener citas del servidor para validar horarios:", err);
     }
-    contenedor.appendChild(btn);
-  });
+
+    // También verificamos bloqueos locales por si acaso
+    const bloqueos = JSON.parse(localStorage.getItem('bloqueos_admin') || '{}')[fecha] || [];
+
+    contenedor.innerHTML = '';
+    const horaSeleccionadaActual = document.getElementById('hora-seleccionada')?.value;
+
+    bloques.forEach(hora => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = hora;
+
+        const estaOcupado = ocupados.includes(hora) || bloqueos.includes(hora);
+
+        if (estaOcupado) {
+            btn.className = "p-2 bg-slate-900/90 text-slate-600 rounded-lg text-xs cursor-not-allowed line-through border border-slate-900 font-bold opacity-60";
+            btn.disabled = true;
+            btn.title = "Este horario ya se encuentra reservado";
+        } else {
+            if (hora === horaSeleccionadaActual) {
+                btn.className = "p-2 bg-red-600 text-white rounded-lg text-xs transition border border-red-500 btn-slot font-bold shadow-lg shadow-red-600/30 scale-105";
+            } else {
+                btn.className = "p-2 bg-slate-900 hover:bg-red-600/80 text-slate-300 hover:text-white rounded-lg text-xs transition border border-slate-800 btn-slot font-semibold";
+            }
+
+            btn.onclick = () => {
+                document.querySelectorAll('.btn-slot').forEach(b => {
+                    b.className = "p-2 bg-slate-900 hover:bg-red-600/80 text-slate-300 hover:text-white rounded-lg text-xs transition border border-slate-800 btn-slot font-semibold";
+                });
+                
+                btn.className = "p-2 bg-red-600 text-white rounded-lg text-xs transition border border-red-500 btn-slot font-bold shadow-lg shadow-red-600/30 scale-105";
+                document.getElementById('hora-seleccionada').value = hora;
+            };
+        }
+        contenedor.appendChild(btn);
+    });
 }
 
 function prepararResumen() {
