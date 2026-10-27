@@ -5,26 +5,25 @@ from datetime import datetime
 app = Flask(__name__, template_folder='TEMPLATES', static_folder='static')
 
 def init_db():
-    conn = sqlite3.connect('taller.db')
-    cursor = conn.cursor()
-    cursor.execute('''
+  conn = sqlite3.connect('taller.db')
+  cursor = conn.cursor()
+  cursor.execute('''
         CREATE TABLE IF NOT EXISTS citas (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            folio TEXT UNIQUE,
+            folio TEXT PRIMARY KEY,
             cliente TEXT,
-            nombre TEXT,
             telefono TEXT,
             vehiculo TEXT,
             vin TEXT,
             servicio TEXT,
+            tipo_servicio TEXT, 
             fecha TEXT,
             hora TEXT,
             costo TEXT,
-            estatus TEXT DEFAULT 'En espera'
+            estatus TEXT
         )
     ''')
-    conn.commit()
-    conn.close()
+  conn.commit()
+  conn.close()
 
 # Inicialización de la base de datos al arrancar
 init_db()
