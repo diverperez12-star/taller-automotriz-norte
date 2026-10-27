@@ -207,14 +207,8 @@
         }
 
         citas.forEach(c => {
-          const detalleServicio = c.serviciosDetalle || c.servicio || 'Servicio General';
-          
-          const serviciosArr = detalleServicio.split(', ');
-          let serviciosHTML = `<div class="flex flex-wrap gap-1">`;
-          serviciosArr.forEach(s => {
-            serviciosHTML += `<span class="bg-red-950/60 text-red-300 border border-red-800/60 px-2 py-0.5 rounded-md text-[10px] font-semibold">${s}</span>`;
-          });
-          serviciosHTML += `</div>`;
+          const tipoServicio = c.tipo_servicio || 'PREVENTIVO';
+          const servicioDetallado = c.servicio || 'Servicio General';
 
           let estatusBadgeClass = "bg-amber-950/50 text-amber-300 border-amber-800/80";
           if (c.estatus === 'En Reparación') estatusBadgeClass = "bg-blue-950/50 text-blue-300 border-blue-800/80";
@@ -222,14 +216,21 @@
 
           const tr = document.createElement('tr');
           tr.className = "hover:bg-slate-900/40 transition border-b border-slate-800/40";
-          tr.setAttribute('data-search', `${c.folio} ${c.cliente} ${c.vehiculo}`.toLowerCase());
+          tr.setAttribute('data-search', `${c.folio} ${c.cliente} ${c.vehiculo} ${tipoServicio} ${servicioDetallado}`.toLowerCase());
           tr.setAttribute('data-estatus', c.estatus || 'Confirmada / En Espera');
 
           tr.innerHTML = `
             <td class="p-3.5 font-mono font-black text-red-400 whitespace-nowrap">${c.folio}</td>
             <td class="p-3.5 font-bold text-white whitespace-nowrap">${c.cliente}</td>
             <td class="p-3.5 text-slate-300 font-medium">${c.vehiculo}</td>
-            <td class="p-3.5">${serviciosHTML}</td>
+            <td class="p-3.5">
+              <div class="flex flex-col gap-1 items-start">
+                <span class="px-2 py-0.5 bg-red-950/60 border border-red-600/50 text-red-400 rounded text-[10px] font-black uppercase tracking-wider">
+                  ${tipoServicio}
+                </span>
+                <span class="text-xs text-slate-300 font-semibold">${servicioDetallado}</span>
+              </div>
+            </td>
             <td class="p-3.5 text-slate-400 whitespace-nowrap font-mono text-[11px]">${c.fecha}<br><span class="text-slate-500">${c.hora}</span></td>
             <td class="p-3.5 text-center whitespace-nowrap">
               <select onchange="cambiarEstatusServer('${c.folio}', this.value)" class="bg-slate-900 border text-xs font-bold rounded-lg px-2 py-1 focus:outline-none ${estatusBadgeClass}">
@@ -291,7 +292,7 @@
       });
     }
 
-   async function cambiarEstatusServer(folio, nuevoEstatus) {
+    async function cambiarEstatusServer(folio, nuevoEstatus) {
       try {
         const response = await fetch('/api/actualizar-estatus', {
           method: 'POST',
@@ -300,7 +301,7 @@
         });
         const data = await response.json();
         if (data.success) {
-          cargarCitasAdmin(); // Recarga la tabla con los datos actualizados del servidor
+          cargarCitasAdmin();
         } else {
           alert("No se pudo actualizar el estatus en el servidor.");
         }
@@ -450,7 +451,7 @@
       };
     }
 
-   async function eliminarCitaServer(folio) {
+    async function eliminarCitaServer(folio) {
       if (!confirm(`¿Estás seguro de eliminar la cita ${folio} del sistema?`)) return;
 
       try {
@@ -461,7 +462,7 @@
         });
         const data = await response.json();
         if (data.success) {
-          cargarCitasAdmin(); // Refresca la tabla eliminando el registro de SQLite
+          cargarCitasAdmin();
         } else {
           alert("No se pudo eliminar la cita en el servidor.");
         }
