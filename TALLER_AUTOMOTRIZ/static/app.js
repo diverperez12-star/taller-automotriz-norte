@@ -440,7 +440,6 @@ async function cargarHorariosDisponibles(fecha) {
     let ocupados = [];
 
     try {
-        // Consultar directamente las citas reales desde el servidor (SQLite)
         const response = await fetch('/api/citas');
         if (response.ok) {
             const citasServidor = await response.json();
@@ -452,7 +451,6 @@ async function cargarHorariosDisponibles(fecha) {
         console.error("Error al obtener citas del servidor para validar horarios:", err);
     }
 
-    // También verificamos bloqueos locales por si acaso
     const bloqueos = JSON.parse(localStorage.getItem('bloqueos_admin') || '{}')[fecha] || [];
 
     contenedor.innerHTML = '';
@@ -541,6 +539,7 @@ async function confirmarYGuardarCita() {
     vehiculo: vehiculoVal,
     vin: document.getElementById('input-vin').value.toUpperCase(),
     servicio: servicioVal,
+    tipo_servicio: currentCategory.toUpperCase(), // <-- CRUCIAL PARA POWER BI
     fecha: fechaVal,
     hora: horaVal,
     costo: costoVal,
@@ -620,7 +619,6 @@ function irARastrear() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  // 1. Bloqueo estricto del VIN a 17 caracteres y mayúsculas automáticas (PC y Móvil)
   const inputVin = document.getElementById('input-vin');
   if (inputVin) {
     inputVin.setAttribute('maxlength', '17');
@@ -633,16 +631,14 @@ document.addEventListener("DOMContentLoaded", () => {
     onMarcaChange();
     actualizarBarraPasos();
 
-    // 2. Calendario optimizado para móviles (touchUi) y bloqueo de domingos
     if (typeof flatpickr !== "undefined") {
       flatpickr("#fecha-cita", {
         locale: "es",
         minDate: "today",
         dateFormat: "Y-m-d",
-        touchUi: true, // Soluciona la apertura táctil en dispositivos móviles
+        touchUi: true,
         disable: [
           function(date) {
-            // Deshabilita los domingos (0 = Domingo)
             return (date.getDay() === 0);
           }
         ],
