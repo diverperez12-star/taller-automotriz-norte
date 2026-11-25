@@ -54,6 +54,7 @@
           <div class="flex justify-between border-b border-slate-800/60 pb-2.5"><span class="text-slate-400">Vehículo:</span><span id="lbl-vehiculo" class="text-white font-bold"></span></div>
           <div class="flex justify-between border-b border-slate-800/60 pb-2.5"><span class="text-slate-400">Servicio:</span><span id="lbl-servicio" class="text-white font-bold"></span></div>
           <div class="flex justify-between border-b border-slate-800/60 pb-2.5"><span class="text-slate-400">Fecha y Hora:</span><span id="lbl-agenda" class="text-white font-bold"></span></div>
+          <div class="flex justify-between border-b border-slate-800/60 pb-2.5"><span class="text-slate-400">Tiempo Estimado:</span><span id="lbl-tiempo" class="text-amber-400 font-bold"></span></div>
           <div class="flex justify-between items-center text-sm font-black pt-1"><span class="text-slate-300">Total:</span><span id="lbl-costo" class="text-red-400 font-mono text-base"></span></div>
         </div>
 
@@ -131,6 +132,7 @@
             nombre: clienteUrl,
             vehiculo: urlParams.get('vehiculo') || 'Vehículo Registrado',
             servicio: urlParams.get('servicio') || 'Servicio General',
+            tiempo_estimado: urlParams.get('tiempo') || 'Por confirmar',
             fecha: urlParams.get('fecha') || '',
             hora: urlParams.get('hora') || '',
             costo: urlParams.get('costo') || '$0 MXN',
@@ -157,6 +159,7 @@
       document.getElementById('lbl-vehiculo').innerText = cita.vehiculo;
       document.getElementById('lbl-servicio').innerText = cita.servicio || "Servicio General";
       document.getElementById('lbl-agenda').innerText = `${cita.fecha} ${cita.hora || ''}`.trim();
+      document.getElementById('lbl-tiempo').innerText = cita.tiempo_estimado || "Por confirmar";
       document.getElementById('lbl-costo').innerText = cita.costo;
       document.getElementById('lbl-estatus').innerText = cita.estatus || 'En espera';
 
