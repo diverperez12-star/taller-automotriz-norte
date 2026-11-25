@@ -199,24 +199,43 @@ const dbVehiculos = {
   }
 };
 
+// Catálogo sincronizado con los tiempos aproximados del estudio de tiempos (Excel)
 const serviciosBase = {
   preventivo: [
-    { id: "p1", nombre: "Afinación Mayor", horas: "2.5 horas", base: 2730 },
-    { id: "p2", nombre: "Cambio de Aceite Sintético y Filtro", horas: "1.0 hora", base: 1260 },
-    { id: "p3", nombre: "Servicio Mantenimiento Frenos (4 ruedas)", horas: "1.5 horas", base: 840 },
-    { id: "p4", nombre: "Alineación, Balanceo y Rotación", horas: "1.5 horas", base: 735 },
-    { id: "p5", nombre: "Servicio de Aire Acondicionado / Carga de Gas", horas: "1.0 hora", base: 1050 }
+    { id: "p1", nombre: "Afinación de Motor", minutos: 140, base: 2730 },
+    { id: "p2", nombre: "Cambio de Aceite y Filtro", minutos: 115, base: 1260 },
+    { id: "p3", nombre: "Revisión de Frenos (4 ruedas)", minutos: 105, base: 840 },
+    { id: "p4", nombre: "Alineación, Balanceo y Rotación", minutos: 105, base: 735 },
+    { id: "p5", nombre: "Revisión de la Batería", minutos: 85, base: 350 },
+    { id: "p6", nombre: "Cambio de Bandas de Accesorios", minutos: 95, base: 950 },
+    { id: "p7", nombre: "Servicio de Aire Acondicionado / Carga de Gas", minutos: 60, base: 1050 }
   ],
   correctivo: [
-    { id: "c1", nombre: "Cambio de Balatas y Rectificación", horas: "2.5 horas", base: 2520 },
-    { id: "c2", nombre: "Reemplazo Kit Clutch / Embrague", horas: "5.0 horas", base: 6300 },
-    { id: "c3", nombre: "Servicio de Suspensión y Dirección", horas: "3.0 horas", base: 3150 },
-    { id: "c4", nombre: "Diagnóstico Sistema Eléctrico", horas: "2.0 horas", base: 1260 }
+    { id: "c1", nombre: "Cambio de Balatas y Discos de Freno", minutos: 180, base: 2520 },
+    { id: "c2", nombre: "Reparación del Sistema de Embrague (Clutch)", minutos: 255, base: 6300 },
+    { id: "c3", nombre: "Servicio de Suspensión y Dirección", minutos: 180, base: 3150 },
+    { id: "c4", nombre: "Diagnóstico de Clúster y Red CAN Bus", minutos: 195, base: 1260 },
+    { id: "c5", nombre: "Reparación por Sobrecalentamiento", minutos: 215, base: 2800 },
+    { id: "c6", nombre: "Reparación de Fugas de Anticongelante", minutos: 220, base: 1850 },
+    { id: "c7", nombre: "Reparación del Alternador o Marcha", minutos: 260, base: 2400 },
+    { id: "c8", nombre: "Reparación de Fugas de Aceite", minutos: 265, base: 2100 },
+    { id: "c9", nombre: "Cambio de Kit de Distribución", minutos: 315, base: 4200 }
   ],
   diagnostico: [
-    { id: "d1", nombre: "Inspección General 25 Puntos + Escaneo", horas: "1.0 hora", base: 200 }
+    { id: "d1", nombre: "Inspección General 25 Puntos + Escaneo", minutos: 60, base: 200 }
   ]
 };
+
+// Formatea los minutos totales en un texto claro (ej. "115 min aprox. (1h 55m)")
+function formatearTiempo(minutos) {
+  if (!minutos || minutos <= 0) return "Por definir";
+  const hrs = Math.floor(minutos / 60);
+  const mins = minutos % 60;
+  if (hrs === 0) return `${mins} min aprox.`;
+  return mins > 0
+    ? `${minutos} min aprox. (${hrs}h ${mins}m)`
+    : `${minutos} min aprox. (${hrs}h)`;
+}
 
 function goToStep(step) {
   if (step > currentStep && !validarPasoActual()) return;
@@ -389,6 +408,7 @@ function renderServices() {
   list.forEach(s => {
     const precio = Math.round(s.base * factor);
     const checked = selectedServices.has(s.id) ? 'checked' : '';
+    const tiempoTexto = formatearTiempo(s.minutos);
 
     const div = document.createElement('label');
     div.className = "p-3.5 bg-slate-900 border border-slate-800 rounded-xl hover:border-red-500/50 cursor-pointer transition flex justify-between items-start";
@@ -397,7 +417,7 @@ function renderServices() {
         <input type="checkbox" ${checked} onchange="toggleService('${s.id}')" class="mt-1 accent-red-600">
         <div>
           <p class="text-xs font-bold text-white">${s.nombre}</p>
-          <p class="text-[10px] text-slate-400 mt-0.5">${s.horas}</p>
+          <p class="text-[11px] text-amber-400 font-semibold mt-0.5">⏱️ ${tiempoTexto}</p>
         </div>
       </div>
       <span class="text-xs font-mono font-bold text-red-400 ml-2">${'$' + precio.toLocaleString()}</span>
@@ -425,6 +445,18 @@ function calcularTotal() {
     if (selectedServices.has(s.id)) total += Math.round(s.base * factor);
   });
   return total;
+}
+
+// Suma los minutos estimados de todos los servicios seleccionados
+function calcularTiempoTotal() {
+  let totalMinutos = 0;
+  const list = serviciosBase[currentCategory] || [];
+  list.forEach(s => {
+    if (selectedServices.has(s.id)) {
+      totalMinutos += (s.minutos || 0);
+    }
+  });
+  return totalMinutos;
 }
 
 async function cargarHorariosDisponibles(fecha) {
@@ -507,6 +539,12 @@ function prepararResumen() {
   document.getElementById('res-vin').innerText = document.getElementById('input-vin').value;
   document.getElementById('res-tipo').innerText = currentCategory.toUpperCase();
   document.getElementById('res-agenda').innerText = `${fechaElegida} a las ${document.getElementById('hora-seleccionada').value}`;
+  
+  const resTiempoElem = document.getElementById('res-tiempo');
+  if (resTiempoElem) {
+    resTiempoElem.innerText = formatearTiempo(calcularTiempoTotal());
+  }
+
   document.getElementById('res-costo').innerText = `$${calcularTotal().toLocaleString('es-MX')}`;
 }
 
@@ -530,6 +568,7 @@ async function confirmarYGuardarCita() {
   const vehiculoVal = document.getElementById('res-vehiculo').innerText;
   const servicioVal = obtenerNombresServiciosSeleccionados();
   const costoVal = document.getElementById('res-costo').innerText;
+  const tiempoVal = formatearTiempo(calcularTiempoTotal());
 
   const nuevaCita = {
     folio: currentFolio,
@@ -540,6 +579,7 @@ async function confirmarYGuardarCita() {
     vin: document.getElementById('input-vin').value.toUpperCase(),
     servicio: servicioVal,
     tipo_servicio: currentCategory.toUpperCase(), // <-- CRUCIAL PARA POWER BI
+    tiempo_estimado: tiempoVal,
     fecha: fechaVal,
     hora: horaVal,
     costo: costoVal,
