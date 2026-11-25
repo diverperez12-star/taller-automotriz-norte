@@ -123,37 +123,50 @@
       if (paramFolio) {
         document.getElementById('input-search-folio').value = paramFolio;
 
-        // Si el QR trae los datos incrustados en la URL, mostrarlos y guardarlos al instante
+        // Si el QR trae datos incrustados como respaldo inicial
         const clienteUrl = urlParams.get('cliente');
         if (clienteUrl) {
-          const citaUrl = {
-            folio: paramFolio,
-            cliente: clienteUrl,
-            nombre: clienteUrl,
-            vehiculo: urlParams.get('vehiculo') || 'Vehículo Registrado',
-            servicio: urlParams.get('servicio') || 'Servicio General',
-            tiempo_estimado: urlParams.get('tiempo') || 'Por confirmar',
-            fecha: urlParams.get('fecha') || '',
-            hora: urlParams.get('hora') || '',
-            costo: urlParams.get('costo') || '$0 MXN',
-            estatus: 'En espera'
-          };
-
           const citasLocales = JSON.parse(localStorage.getItem('citas_registradas') || '[]');
-          if (!citasLocales.some(c => c.folio === paramFolio)) {
-            citasLocales.push(citaUrl);
+          if (!citasLocales.some(c => c.folio && c.folio.trim().toUpperCase() === paramFolio.trim().toUpperCase())) {
+            citasLocales.push({
+              folio: paramFolio,
+              cliente: clienteUrl,
+              nombre: clienteUrl,
+              vehiculo: urlParams.get('vehiculo') || 'Vehículo Registrado',
+              servicio: urlParams.get('servicio') || 'Servicio General',
+              tiempo_estimado: urlParams.get('tiempo') || 'Por confirmar',
+              fecha: urlParams.get('fecha') || '',
+              hora: urlParams.get('hora') || '',
+              costo: urlParams.get('costo') || '$0 MXN',
+              estatus: 'En espera'
+            });
             localStorage.setItem('citas_registradas', JSON.stringify(citasLocales));
           }
-
-          mostrarCita(citaUrl);
-          return;
         }
 
+        // Siempre consultar primero al servidor para obtener el estatus más reciente
         buscarCitaPorFolio(paramFolio);
       }
     };
 
+    function aplicarColorEstatus(elem, estatus) {
+      const est = (estatus || '').toLowerCase();
+      elem.className = "text-sm font-black uppercase tracking-wide ";
+      if (est.includes('completad') || est.includes('entregad')) {
+        elem.className += "text-emerald-400";
+      } else if (est.includes('reparaci') || est.includes('proceso')) {
+        elem.className += "text-sky-400";
+      } else if (est.includes('cancelad')) {
+        elem.className += "text-red-400";
+      } else {
+        elem.className += "text-amber-400";
+      }
+    }
+
     function mostrarCita(cita) {
+      const estatusActual = cita.estatus || cita.estado || 'En espera';
+      const lblEstatus = document.getElementById('lbl-estatus');
+
       document.getElementById('lbl-folio').innerText = cita.folio;
       document.getElementById('lbl-cliente').innerText = cita.nombre || cita.cliente || "Cliente Registrado";
       document.getElementById('lbl-vehiculo').innerText = cita.vehiculo;
@@ -161,7 +174,9 @@
       document.getElementById('lbl-agenda').innerText = `${cita.fecha} ${cita.hora || ''}`.trim();
       document.getElementById('lbl-tiempo').innerText = cita.tiempo_estimado || "Por confirmar";
       document.getElementById('lbl-costo').innerText = cita.costo;
-      document.getElementById('lbl-estatus').innerText = cita.estatus || 'En espera';
+      
+      lblEstatus.innerText = estatusActual;
+      aplicarColorEstatus(lblEstatus, estatusActual);
 
       const boxReporte = document.getElementById('box-reporte-mecanico');
       const gridViejas = document.getElementById('grid-client-viejas');
@@ -231,22 +246,33 @@
       if (!folio) return;
 
       let cita = null;
-
-      // 1. Buscar en localStorage del dispositivo
       const citasLocales = JSON.parse(localStorage.getItem('citas_registradas') || '[]');
-      cita = citasLocales.find(c => c.folio && c.folio.trim().toUpperCase() === folio);
 
-      // 2. Si no está localmente, consultar la API del servidor Flask
-      if (!cita) {
-        try {
-          const response = await fetch('/api/citas');
-          if (response.ok) {
-            const citasServidor = await response.json();
-            cita = citasServidor.find(c => c.folio && c.folio.trim().toUpperCase() === folio);
+      // 1. Consultar PRIMERO el servidor Flask para traer el estatus actualizado desde el Admin
+      try {
+        const response = await fetch(`/api/citas?t=${Date.now()}`);
+        if (response.ok) {
+          const citasServidor = await response.json();
+          cita = citasServidor.find(c => c.folio && c.folio.trim().toUpperCase() === folio);
+
+          // Actualizar la copia en localStorage para mantenerla sincronizada
+          if (cita) {
+            const idx = citasLocales.findIndex(c => c.folio && c.folio.trim().toUpperCase() === folio);
+            if (idx !== -1) {
+              citasLocales[idx] = { ...citasLocales[idx], ...cita };
+            } else {
+              citasLocales.push(cita);
+            }
+            localStorage.setItem('citas_registradas', JSON.stringify(citasLocales));
           }
-        } catch (err) {
-          console.warn("No se pudo conectar con el servidor", err);
         }
+      } catch (err) {
+        console.warn("No se pudo conectar con el servidor, usando respaldo local:", err);
+      }
+
+      // 2. Si el servidor no responde o no tiene el folio, buscar en localStorage como respaldo
+      if (!cita) {
+        cita = citasLocales.find(c => c.folio && c.folio.trim().toUpperCase() === folio);
       }
 
       if (cita) {
